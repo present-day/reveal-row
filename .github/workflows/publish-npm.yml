@@ -65,7 +65,7 @@ jobs:
         # --loglevel=verbose surfaces the trusted-publishing OIDC exchange so
         # misconfigurations show up as real diagnostics instead of a misleading
         # ENEEDAUTH / 404 (see https://github.com/npm/cli/issues/9088).
+        # Do NOT set NODE_AUTH_TOKEN (not even to ""): an explicit empty value
+        # still satisfies the .npmrc token lookup and bypasses the OIDC exchange.
+        # When the variable is absent, npm 10+ fetches the GitHub OIDC token itself.
         run: npm publish --provenance --loglevel=verbose
-        env:
-          # Avoid any token from the job / org secrets shadowing trusted publishing.
-          NODE_AUTH_TOKEN: ""
