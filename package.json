@@ -26,9 +26,9 @@
     "lint": "biome check .",
     "format": "biome check --write .",
     "type-check": "tsc --noEmit",
-    "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test": "bun --bun vitest run",
+    "test:coverage": "bun --bun vitest run --coverage",
+    "test:watch": "bun --bun vitest"
   },
   "keywords": [
     "react",
@@ -57,14 +57,14 @@
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.12",
-    "@types/react": "^19.2.9",
+    "@biomejs/biome": "^2.4.13",
+    "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-istanbul": "^4.1.5",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
-    "tsup": "^8.3.5",
+    "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
     "vitest": "^4.1.5"
