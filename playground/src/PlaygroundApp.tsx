@@ -1,7 +1,7 @@
 import {
   REVEAL_POSITION,
-  RevealRow,
   type RevealPosition,
+  RevealRow,
   type RevealRowHandle,
 } from '@present-day/reveal-row'
 import { useCallback, useRef, useState } from 'react'
@@ -48,13 +48,7 @@ function Description({ children }: { children: React.ReactNode }) {
   return <p className="mb-3 text-sm text-zinc-500">{children}</p>
 }
 
-function ItemContent({
-  title,
-  subtitle,
-}: {
-  title: string
-  subtitle: string
-}) {
+function ItemContent({ title, subtitle }: { title: string; subtitle: string }) {
   return (
     <div className="flex min-h-[56px] flex-col justify-center px-4 py-3">
       <span className="text-sm font-medium text-zinc-900">{title}</span>
@@ -300,7 +294,9 @@ export function PlaygroundApp() {
             }
             actionWidthLeft={120}
             actionWidthRight={64}
-            onRevealChange={(pos) => pushLog(`custom-width: onRevealChange → ${pos}`)}
+            onRevealChange={(pos) =>
+              pushLog(`custom-width: onRevealChange → ${pos}`)
+            }
           >
             <ItemContent
               title="Wide left (120px) + narrow right (64px)"
@@ -336,7 +332,9 @@ export function PlaygroundApp() {
                 onClick={() => pushLog('no-handle: delete')}
               />
             }
-            onRevealChange={(pos) => pushLog(`no-handle: onRevealChange → ${pos}`)}
+            onRevealChange={(pos) =>
+              pushLog(`no-handle: onRevealChange → ${pos}`)
+            }
           >
             <ItemContent
               title="No drag handle rendered"
@@ -422,7 +420,9 @@ function DisabledDemo({ onLog }: { onLog: (text: string) => void }) {
           <ItemContent
             title={disabled ? 'Swiping is disabled' : 'Swipe left to reveal'}
             subtitle={
-              disabled ? 'Toggle above to re-enable' : 'Then disable to see snap-back'
+              disabled
+                ? 'Toggle above to re-enable'
+                : 'Then disable to see snap-back'
             }
           />
         </RevealRow>

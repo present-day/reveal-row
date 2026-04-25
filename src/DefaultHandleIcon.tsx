@@ -8,6 +8,7 @@ export function DefaultHandleIcon() {
       fill="currentColor"
       aria-hidden
     >
+      <title>Drag handle</title>
       <circle cx="6" cy="4" r="1.2" />
       <circle cx="10" cy="4" r="1.2" />
       <circle cx="6" cy="8" r="1.2" />

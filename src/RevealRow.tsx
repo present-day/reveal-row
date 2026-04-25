@@ -280,7 +280,12 @@ function RevealRowInner({
       role="presentation"
       className={classNames.handleContainer}
       data-reveal-row-handle
-      style={{ flexShrink: 0, alignSelf: 'stretch', display: 'flex', alignItems: 'center' }}
+      style={{
+        flexShrink: 0,
+        alignSelf: 'stretch',
+        display: 'flex',
+        alignItems: 'center',
+      }}
       title={handleOverride === undefined ? handleTitle : undefined}
     >
       {handleContent}
