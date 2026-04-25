@@ -1,0 +1,72 @@
+{
+  "name": "@present-day/reveal-row",
+  "version": "0.1.0",
+  "description": "Horizontal scroll-to-reveal row for actions on the left, right, or both sides",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "packageManager": "bun@1.1.42",
+  "scripts": {
+    "playground": "vite --config playground/vite.config.ts",
+    "playground:build": "vite build --config playground/vite.config.ts",
+    "playground:preview": "vite preview --config playground/vite.config.ts",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "biome check .",
+    "format": "biome check --write .",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest"
+  },
+  "keywords": [
+    "react",
+    "reveal",
+    "swipe",
+    "scroll",
+    "list-row",
+    "actions",
+    "mobile"
+  ],
+  "author": "Present Day",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/present-day/reveal-row.git"
+  },
+  "bugs": {
+    "url": "https://github.com/present-day/reveal-row/issues"
+  },
+  "homepage": "https://github.com/present-day/reveal-row#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.12",
+    "@types/react": "^19.2.9",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "@vitest/coverage-istanbul": "^4.1.5",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tsup": "^8.3.5",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10",
+    "vitest": "^4.1.5"
+  }
+}
