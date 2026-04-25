@@ -60,10 +60,6 @@ jobs:
           node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
-      - name: Install npm with OIDC trusted publishing
-        if: steps.version-check.outputs.already_published == 'false'
-        run: npm install -g npm@latest
-
       - name: Publish to npm (OIDC)
         if: steps.version-check.outputs.already_published == 'false'
         # --loglevel=verbose surfaces the trusted-publishing OIDC exchange so
