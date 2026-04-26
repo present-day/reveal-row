@@ -13,6 +13,10 @@ import {
 import { DefaultHandleIcon } from './DefaultHandleIcon'
 import { getRevealFromScroll, getScrollClosed } from './getRevealFromScroll'
 import {
+  ANIMATION_PRESET,
+  ANIMATION_PRESETS,
+  type AnimationConfig,
+  type AnimationPreset,
   REVEAL_HANDLE_POSITION,
   REVEAL_MODE,
   REVEAL_POSITION,
@@ -43,6 +47,23 @@ function resolveMode(
   return REVEAL_MODE.right
 }
 
+function resolveAnimationConfig(
+  animated: boolean | AnimationPreset | AnimationConfig | undefined,
+  defaultPreset: AnimationPreset,
+  customConfig?: AnimationConfig,
+): AnimationConfig {
+  if (animated === false) {
+    return ANIMATION_PRESETS[ANIMATION_PRESET.none]
+  }
+  if (animated === true || animated === undefined) {
+    return customConfig || ANIMATION_PRESETS[defaultPreset]
+  }
+  if (typeof animated === 'string') {
+    return ANIMATION_PRESETS[animated]
+  }
+  return animated
+}
+
 const SCROLL_REVEAL_DEBOUNCE_MS = 64
 const restEpsilon = 2
 
@@ -54,6 +75,12 @@ const rootScrollStyle: CSSProperties = {
   WebkitOverflowScrolling: 'touch',
   overscrollBehaviorX: 'contain',
   touchAction: 'pan-x pan-y',
+}
+
+const rootScrollStyleDisabled: CSSProperties = {
+  ...rootScrollStyle,
+  overflowX: 'hidden',
+  touchAction: 'pan-y',
 }
 
 const snapStart: CSSProperties = { scrollSnapAlign: 'start' }
@@ -83,6 +110,8 @@ function RevealRowInner({
   isActive = false,
   className,
   style,
+  animationPreset = ANIMATION_PRESET.quick,
+  animationConfig,
   forwardedRef,
 }: InnerProps) {
   const mode = resolveMode(left, right, modeProp)
@@ -104,6 +133,7 @@ function RevealRowInner({
   const swipedRef = useRef(false)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasAppliedInitialScroll = useRef(false)
+  const isAnimatingRef = useRef(false)
 
   const readPosition = useCallback((): RevealPosition => {
     const el = containerRef.current
@@ -125,45 +155,157 @@ function RevealRowInner({
     if (!el) return
     const m = getMaxScroll(el)
     const closed = getScrollClosed(wL, wR, m, mode)
+
+    // For immediate scroll, we can use the default behavior
+    // CSS scroll snap will handle the final positioning
     el.scrollLeft = closed
   }, [wL, wR, mode])
+
+  const scrollToPosition = useCallback(
+    (targetScrollLeft: number, animationOptions: AnimationConfig) => {
+      const el = containerRef.current
+      if (!el) return
+
+      const { duration, easing } = animationOptions
+
+      if (duration === 0) {
+        el.scrollLeft = targetScrollLeft
+        return
+      }
+
+      // Disable scroll snap during animation
+      isAnimatingRef.current = true
+      const originalScrollSnapType = el.style.scrollSnapType
+      el.style.scrollSnapType = 'none'
+
+      const startScrollLeft = el.scrollLeft
+      const distance = targetScrollLeft - startScrollLeft
+      const startTime = performance.now()
+
+      const animate = (currentTime: number) => {
+        const elapsed = currentTime - startTime
+        const progress = Math.min(elapsed / duration, 1)
+
+        let easedProgress = progress
+        if (easing === 'ease-out') {
+          easedProgress = 1 - (1 - progress) ** 2
+        } else if (easing === 'ease-in-out') {
+          easedProgress =
+            progress < 0.5
+              ? 2 * progress * progress
+              : 1 - (-2 * progress + 2) ** 2 / 2
+        } else if (easing.startsWith('cubic-bezier')) {
+          // For the bounce effect, we'll use a simplified approximation
+          easedProgress = progress * progress * (3 - 2 * progress)
+          if (easing.includes('-0.55')) {
+            // Bounce effect approximation
+            easedProgress =
+              progress < 0.5
+                ? 4 * progress * progress * progress
+                : 1 - (-2 * progress + 2) ** 3 / 2
+            // Add overshoot for bounce
+            if (progress > 0.7 && progress < 1) {
+              easedProgress +=
+                Math.sin((progress - 0.7) * Math.PI * 10) * 0.1 * (1 - progress)
+            }
+          }
+        }
+
+        el.scrollLeft = startScrollLeft + distance * easedProgress
+
+        if (progress < 1) {
+          requestAnimationFrame(animate)
+        } else {
+          el.scrollLeft = targetScrollLeft
+          // Re-enable scroll snap after animation completes
+          el.style.scrollSnapType = originalScrollSnapType || 'x mandatory'
+          isAnimatingRef.current = false
+        }
+      }
+
+      requestAnimationFrame(animate)
+    },
+    [],
+  )
 
   useImperativeHandle(
     forwardedRef,
     () => ({
-      close: () => {
-        scrollToClosed()
-        const p = readPosition()
-        if (lastEmitted.current !== p) {
-          lastEmitted.current = p
-          onRevealChange?.(p)
-        }
+      close: (animated?: boolean | AnimationPreset | AnimationConfig) => {
+        const el = containerRef.current
+        if (!el) return
+
+        const m = getMaxScroll(el)
+        const closed = getScrollClosed(wL, wR, m, mode)
+        const animConfig = resolveAnimationConfig(
+          animated,
+          animationPreset,
+          animationConfig,
+        )
+
+        scrollToPosition(closed, animConfig)
+
+        // Update position after animation or immediately if no animation
+        const delay = animConfig.duration > 0 ? animConfig.duration : 0
+        setTimeout(() => {
+          const p = readPosition()
+          if (lastEmitted.current !== p) {
+            lastEmitted.current = p
+            onRevealChange?.(p)
+          }
+        }, delay)
       },
-      reveal: (position: RevealPosition) => {
+      reveal: (
+        position: RevealPosition,
+        animated?: boolean | AnimationPreset | AnimationConfig,
+      ) => {
         const el = containerRef.current
         if (!el) return
         const max = getMaxScroll(el)
+
+        let targetScroll: number
         if (position === REVEAL_POSITION.center) {
-          el.scrollLeft = getScrollClosed(wL, wR, max, mode)
+          targetScroll = getScrollClosed(wL, wR, max, mode)
         } else if (
           position === REVEAL_POSITION.left &&
           (mode === REVEAL_MODE.left || mode === REVEAL_MODE.both)
         ) {
-          el.scrollLeft = 0
+          targetScroll = 0
         } else if (
           position === REVEAL_POSITION.right &&
           (mode === REVEAL_MODE.right || mode === REVEAL_MODE.both)
         ) {
-          el.scrollLeft = max
+          targetScroll = max
         } else {
           return
         }
-        const p = getRevealFromScroll(el.scrollLeft, max, wL, wR, mode)
-        lastEmitted.current = p
-        onRevealChange?.(p)
+
+        const animConfig = resolveAnimationConfig(
+          animated,
+          animationPreset,
+          animationConfig,
+        )
+        scrollToPosition(targetScroll, animConfig)
+
+        // Update position after animation or immediately if no animation
+        const delay = animConfig.duration > 0 ? animConfig.duration : 0
+        setTimeout(() => {
+          const p = getRevealFromScroll(targetScroll, max, wL, wR, mode)
+          lastEmitted.current = p
+          onRevealChange?.(p)
+        }, delay)
       },
     }),
-    [mode, onRevealChange, readPosition, scrollToClosed, wL, wR],
+    [
+      mode,
+      onRevealChange,
+      readPosition,
+      scrollToPosition,
+      wL,
+      wR,
+      animationPreset,
+      animationConfig,
+    ],
   )
 
   useLayoutEffect(() => {
@@ -328,7 +470,7 @@ function RevealRowInner({
       onScroll={handleScroll}
       onClickCapture={onClickCapture}
       style={{
-        ...rootScrollStyle,
+        ...(disabled ? rootScrollStyleDisabled : rootScrollStyle),
         ...style,
         gridTemplateColumns,
       }}
