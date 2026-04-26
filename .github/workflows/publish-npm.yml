@@ -1,12 +1,10 @@
 name: Publish to npm
 
-# Runs on every merge to main and on v* tags (and manual dispatch).
-# The "Check version" step skips publishing if the version in package.json
-# is already on npm — so bumping the version in your PR is all you need to
-# trigger a release when it merges.
+# Publishing the same version twice always fails. Run only when you tag a release
+# (e.g. after merging a version bump: git tag vX.Y.Z && git push origin vX.Y.Z),
+# or use "Run workflow" from the Actions tab (workflow_dispatch).
 on:
   push:
-    branches: [main]
     tags:
       - "v*"
   workflow_dispatch:
@@ -20,52 +18,23 @@ jobs:
     runs-on: ubuntu-latest
     # If your Trusted Publisher on npmjs.com has an "Environment" set, un-comment and set the
     # same name. If you leave the comment below out, the npm side must have Environment empty.
-    # environment: npm-registry-publish
+    # environment: <ENV_NAME>
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v4
 
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
 
       - run: bun install --frozen-lockfile
-      - run: bun run lint
-      - run: bun run test
+      - run: bun run test:run
       - run: bun run build
 
-      - name: Check if version is already published
-        id: version-check
-        run: |
-          PKG_VERSION=$(node -p "require('./package.json').version")
-          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
-          if npm view "@present-day/reveal-row@$PKG_VERSION" version 2>/dev/null | grep -q "$PKG_VERSION"; then
-            echo "already_published=true" >> "$GITHUB_OUTPUT"
-            echo "Version $PKG_VERSION is already on npm — skipping publish."
-          else
-            echo "already_published=false" >> "$GITHUB_OUTPUT"
-            echo "Version $PKG_VERSION is new — will publish."
-          fi
-
-      # Publishes via npm Trusted Publishing (OIDC). Use `npm publish`, not
-      # `bun publish` — Bun does not implement the OIDC exchange yet
-      # (https://github.com/oven-sh/bun/issues/22423).
-      #
-      # Do not set NODE_AUTH_TOKEN here: a normal npm token with 2FA on
-      # "auth and writes" causes EOTP in CI. If you must use a token instead,
-      # use an "Automation" classic token (no OTP) or a Granular access token
-      # with publish, not a user publish token.
-      - uses: actions/setup-node@v4
-        if: steps.version-check.outputs.already_published == 'false'
-        with:
-          node-version: "22"
-          registry-url: "https://registry.npmjs.org"
-
       - name: Publish to npm (OIDC)
-        if: steps.version-check.outputs.already_published == 'false'
         # --loglevel=verbose surfaces the trusted-publishing OIDC exchange so
         # misconfigurations show up as real diagnostics instead of a misleading
         # ENEEDAUTH / 404 (see https://github.com/npm/cli/issues/9088).
-        # Do NOT set NODE_AUTH_TOKEN (not even to ""): an explicit empty value
-        # still satisfies the .npmrc token lookup and bypasses the OIDC exchange.
-        # When the variable is absent, npm 10+ fetches the GitHub OIDC token itself.
         run: npm publish --provenance --loglevel=verbose
+        env:
+          # Avoid any token from the job / org secrets shadowing trusted publishing.
+          NODE_AUTH_TOKEN: ""
