@@ -3,7 +3,7 @@ import '@testing-library/jest-dom'
 // Mock requestAnimationFrame and cancelAnimationFrame for tests
 if (typeof global.requestAnimationFrame === 'undefined') {
   global.requestAnimationFrame = (cb: FrameRequestCallback) => {
-    return setTimeout(() => cb(Date.now()), 0) as unknown as number
+    return setTimeout(() => cb(performance.now()), 0) as unknown as number
   }
 }
 
