@@ -508,13 +508,18 @@ describe('RevealRow', () => {
     })
 
     it('sets swiped state when scrolled away from closed position', () => {
+      const onClick = vi.fn()
       const { container } = render(
-        <RevealRow left={<div>Left action</div>}>
-          <div>Content</div>
-        </RevealRow>,
+        <button type="button" onClick={onClick}>
+          <RevealRow left={<div>Left action</div>}>
+            <div>Content</div>
+          </RevealRow>
+        </button>,
       )
 
-      const rootElement = container.firstChild as HTMLElement
+      const rootElement = container.querySelector(
+        '[data-reveal-mode]',
+      ) as HTMLElement
       Object.defineProperty(rootElement, 'scrollLeft', {
         configurable: true,
         value: 100, // Far from closed position (88 + restEpsilon)
@@ -522,8 +527,9 @@ describe('RevealRow', () => {
 
       fireEvent.scroll(rootElement)
 
-      // Should not throw - this tests the swipedRef.current = true branch
-      expect(() => fireEvent.click(rootElement)).not.toThrow()
+      // Click should be suppressed while swipedRef is true
+      fireEvent.click(rootElement, { bubbles: true })
+      expect(onClick).not.toHaveBeenCalled()
     })
   })
 
@@ -682,6 +688,7 @@ describe('RevealRow', () => {
 
     afterEach(() => {
       vi.useRealTimers()
+      vi.restoreAllMocks()
     })
 
     it('uses default animation preset', () => {
@@ -749,9 +756,14 @@ describe('RevealRow', () => {
 
       const rootElement = container.firstChild as HTMLElement
       const scrollToSpy = vi.fn()
+      let scrollLeftValue = 0
       Object.defineProperty(rootElement, 'scrollLeft', {
         configurable: true,
-        set: scrollToSpy,
+        get: () => scrollLeftValue,
+        set: (value: number) => {
+          scrollLeftValue = value
+          scrollToSpy(value)
+        },
       })
 
       handle?.close(false) // No animation
