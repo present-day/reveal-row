@@ -137,7 +137,7 @@ function RevealRowInner({
       ? REVEAL_HANDLE_POSITION.start
       : REVEAL_HANDLE_POSITION.end)
 
-  const containerRef = useRef<HTMLElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const leftRef = useRef<HTMLDivElement>(null)
   const rightRef = useRef<HTMLDivElement>(null)
   const lastEmitted = useRef<RevealPosition | null>(null)
