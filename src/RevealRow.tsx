@@ -52,16 +52,26 @@ function resolveAnimationConfig(
   defaultPreset: AnimationPreset,
   customConfig?: AnimationConfig,
 ): AnimationConfig {
+  let config: AnimationConfig
+
   if (animated === false) {
-    return ANIMATION_PRESETS[ANIMATION_PRESET.none]
+    config = ANIMATION_PRESETS[ANIMATION_PRESET.none]
+  } else if (animated === true || animated === undefined) {
+    config = customConfig || ANIMATION_PRESETS[defaultPreset]
+  } else if (typeof animated === 'string') {
+    config = ANIMATION_PRESETS[animated]
+  } else {
+    config = animated
   }
-  if (animated === true || animated === undefined) {
-    return customConfig || ANIMATION_PRESETS[defaultPreset]
+
+  // Validate and clamp duration to be >= 0
+  return {
+    ...config,
+    duration: Math.max(
+      0,
+      Number.isFinite(config.duration) ? config.duration : 0,
+    ),
   }
-  if (typeof animated === 'string') {
-    return ANIMATION_PRESETS[animated]
-  }
-  return animated
 }
 
 const SCROLL_REVEAL_DEBOUNCE_MS = 64
@@ -170,11 +180,7 @@ function RevealRowInner({
 
       const { duration, easing } = animationOptions
 
-      // Clamp and normalize duration
-      const clampedDuration =
-        Number.isFinite(duration) && duration > 0 ? duration : 0
-
-      if (clampedDuration === 0) {
+      if (duration === 0) {
         el.scrollLeft = targetScrollLeft
         return
       }
@@ -200,7 +206,7 @@ function RevealRowInner({
 
       const animate = (currentTime: number) => {
         const elapsed = currentTime - startTime
-        const progress = Math.min(elapsed / clampedDuration, 1)
+        const progress = Math.min(elapsed / duration, 1)
 
         let easedProgress = progress
         if (easing === 'ease-out') {
