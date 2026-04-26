@@ -137,7 +137,7 @@ function RevealRowInner({
       ? REVEAL_HANDLE_POSITION.start
       : REVEAL_HANDLE_POSITION.end)
 
-  const containerRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLElement>(null)
   const leftRef = useRef<HTMLDivElement>(null)
   const rightRef = useRef<HTMLDivElement>(null)
   const lastEmitted = useRef<RevealPosition | null>(null)
@@ -502,7 +502,8 @@ function RevealRowInner({
 
   return (
     <Element
-      ref={containerRef}
+      // biome-ignore lint/suspicious/noExplicitAny: Required for polymorphic ref compatibility
+      ref={containerRef as any}
       data-reveal-mode={mode}
       className={cx(classNames.root, className)}
       onScroll={handleScroll}
