@@ -1,4 +1,6 @@
 import {
+  ANIMATION_PRESET,
+  type AnimationPreset,
   REVEAL_POSITION,
   type RevealPosition,
   RevealRow,
@@ -77,9 +79,13 @@ export function PlaygroundApp() {
   )
 
   const handleAction = useCallback(
-    (id: number, action: string) => {
+    (
+      id: number,
+      action: string,
+      animated: boolean | AnimationPreset = true,
+    ) => {
       pushLog(`item ${id}: ${action}`)
-      refMap.current.get(id)?.close()
+      refMap.current.get(id)?.close(animated)
     },
     [pushLog],
   )
@@ -306,6 +312,16 @@ export function PlaygroundApp() {
         </div>
       </section>
 
+      {/* Animation Presets */}
+      <section className="mb-8">
+        <SectionTitle>Animation presets</SectionTitle>
+        <Description>
+          Test different animation presets when action buttons are clicked.
+          Default is <code>quick</code> for a smooth close animation.
+        </Description>
+        <AnimationDemo onLog={pushLog} />
+      </section>
+
       {/* Disabled */}
       <section className="mb-8">
         <SectionTitle>Disabled state</SectionTitle>
@@ -364,6 +380,59 @@ export function PlaygroundApp() {
           </ol>
         )}
       </section>
+    </div>
+  )
+}
+
+function AnimationDemo({ onLog }: { onLog: (text: string) => void }) {
+  const animRefMap = useRef<Map<AnimationPreset, RevealRowHandle>>(new Map())
+
+  const presets: Array<{
+    preset: AnimationPreset
+    label: string
+    color: string
+  }> = [
+    { preset: ANIMATION_PRESET.none, label: 'None', color: 'bg-gray-500' },
+    { preset: ANIMATION_PRESET.quick, label: 'Quick', color: 'bg-blue-500' },
+    { preset: ANIMATION_PRESET.smooth, label: 'Smooth', color: 'bg-green-500' },
+  ]
+
+  return (
+    <div className="space-y-0 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+      {presets.map(({ preset, label, color }, i) => (
+        <div key={preset}>
+          {i > 0 && <Divider />}
+          <RevealRow
+            ref={(el) => {
+              if (el) animRefMap.current.set(preset, el)
+              else animRefMap.current.delete(preset)
+            }}
+            animationPreset={preset}
+            right={
+              <ActionButton
+                label="Close"
+                color={color}
+                onClick={() => {
+                  onLog(
+                    `animation-demo: ${label.toLowerCase()} animation close`,
+                  )
+                  animRefMap.current.get(preset)?.close(preset)
+                }}
+              />
+            }
+            onRevealChange={(pos) =>
+              onLog(
+                `animation-demo: ${label.toLowerCase()} onRevealChange → ${pos}`,
+              )
+            }
+          >
+            <ItemContent
+              title={`${label} animation preset`}
+              subtitle={`Swipe left and click action to see ${label.toLowerCase()} animation`}
+            />
+          </RevealRow>
+        </div>
+      ))}
     </div>
   )
 }

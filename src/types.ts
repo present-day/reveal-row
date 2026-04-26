@@ -25,6 +25,26 @@ export const REVEAL_HANDLE_POSITION = {
 export type RevealHandlePosition =
   (typeof REVEAL_HANDLE_POSITION)[keyof typeof REVEAL_HANDLE_POSITION]
 
+export const ANIMATION_PRESET = {
+  none: 'none',
+  quick: 'quick',
+  smooth: 'smooth',
+} as const
+
+export type AnimationPreset =
+  (typeof ANIMATION_PRESET)[keyof typeof ANIMATION_PRESET]
+
+export type AnimationConfig = {
+  duration: number
+  easing: string
+}
+
+export const ANIMATION_PRESETS: Record<AnimationPreset, AnimationConfig> = {
+  [ANIMATION_PRESET.none]: { duration: 0, easing: 'linear' },
+  [ANIMATION_PRESET.quick]: { duration: 200, easing: 'ease-out' },
+  [ANIMATION_PRESET.smooth]: { duration: 400, easing: 'ease-in-out' },
+}
+
 export type RevealRowClassNames = {
   root?: string
   main?: string
@@ -36,8 +56,11 @@ export type RevealRowClassNames = {
 }
 
 export type RevealRowHandle = {
-  close: () => void
-  reveal: (position: RevealPosition) => void
+  close: (animated?: boolean | AnimationPreset | AnimationConfig) => void
+  reveal: (
+    position: RevealPosition,
+    animated?: boolean | AnimationPreset | AnimationConfig,
+  ) => void
 }
 
 export type RevealRowProps = {
@@ -82,4 +105,13 @@ export type RevealRowProps = {
   isActive?: boolean
   className?: string
   style?: CSSProperties
+  /**
+   * Default animation preset for close/reveal animations when action buttons are clicked.
+   * @default 'quick'
+   */
+  animationPreset?: AnimationPreset
+  /**
+   * Custom animation configuration overriding the preset.
+   */
+  animationConfig?: AnimationConfig
 }
