@@ -385,9 +385,6 @@ export function PlaygroundApp() {
 }
 
 function AnimationDemo({ onLog }: { onLog: (text: string) => void }) {
-  const [selectedPreset, setSelectedPreset] = useState<AnimationPreset>(
-    ANIMATION_PRESET.quick,
-  )
   const animRefMap = useRef<Map<AnimationPreset, RevealRowHandle>>(new Map())
 
   const presets: Array<{
@@ -398,69 +395,44 @@ function AnimationDemo({ onLog }: { onLog: (text: string) => void }) {
     { preset: ANIMATION_PRESET.none, label: 'None', color: 'bg-gray-500' },
     { preset: ANIMATION_PRESET.quick, label: 'Quick', color: 'bg-blue-500' },
     { preset: ANIMATION_PRESET.smooth, label: 'Smooth', color: 'bg-green-500' },
-    {
-      preset: ANIMATION_PRESET.bounce,
-      label: 'Bounce',
-      color: 'bg-purple-500',
-    },
   ]
 
   return (
-    <div>
-      <div className="mb-3 flex flex-wrap gap-2">
-        {presets.map(({ preset, label }) => (
-          <button
-            key={preset}
-            type="button"
-            onClick={() => {
-              setSelectedPreset(preset)
-              onLog(`animation preset changed to: ${preset}`)
+    <div className="space-y-0 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+      {presets.map(({ preset, label, color }, i) => (
+        <div key={preset}>
+          {i > 0 && <Divider />}
+          <RevealRow
+            ref={(el) => {
+              if (el) animRefMap.current.set(preset, el)
+              else animRefMap.current.delete(preset)
             }}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-              selectedPreset === preset
-                ? 'bg-zinc-900 text-white'
-                : 'border border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50'
-            }`}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      <div className="space-y-0 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
-        {presets.map(({ preset, label, color }, i) => (
-          <div key={preset}>
-            {i > 0 && <Divider />}
-            <RevealRow
-              ref={(el) => {
-                if (el) animRefMap.current.set(preset, el)
-                else animRefMap.current.delete(preset)
-              }}
-              animationPreset={preset}
-              right={
-                <ActionButton
-                  label="Close"
-                  color={color}
-                  onClick={() =>
-                    onLog(
-                      `animation-demo: ${label.toLowerCase()} animation close`,
-                    )
-                  }
-                />
-              }
-              onRevealChange={(pos) =>
-                onLog(
-                  `animation-demo: ${label.toLowerCase()} onRevealChange → ${pos}`,
-                )
-              }
-            >
-              <ItemContent
-                title={`${label} animation preset`}
-                subtitle={`Swipe left and click action to see ${label.toLowerCase()} animation`}
+            animationPreset={preset}
+            right={
+              <ActionButton
+                label="Close"
+                color={color}
+                onClick={() => {
+                  onLog(
+                    `animation-demo: ${label.toLowerCase()} animation close`,
+                  )
+                  animRefMap.current.get(preset)?.close(preset)
+                }}
               />
-            </RevealRow>
-          </div>
-        ))}
-      </div>
+            }
+            onRevealChange={(pos) =>
+              onLog(
+                `animation-demo: ${label.toLowerCase()} onRevealChange → ${pos}`,
+              )
+            }
+          >
+            <ItemContent
+              title={`${label} animation preset`}
+              subtitle={`Swipe left and click action to see ${label.toLowerCase()} animation`}
+            />
+          </RevealRow>
+        </div>
+      ))}
     </div>
   )
 }

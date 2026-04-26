@@ -29,7 +29,6 @@ export const ANIMATION_PRESET = {
   none: 'none',
   quick: 'quick',
   smooth: 'smooth',
-  bounce: 'bounce',
 } as const
 
 export type AnimationPreset =
@@ -44,10 +43,6 @@ export const ANIMATION_PRESETS: Record<AnimationPreset, AnimationConfig> = {
   [ANIMATION_PRESET.none]: { duration: 0, easing: 'linear' },
   [ANIMATION_PRESET.quick]: { duration: 200, easing: 'ease-out' },
   [ANIMATION_PRESET.smooth]: { duration: 400, easing: 'ease-in-out' },
-  [ANIMATION_PRESET.bounce]: {
-    duration: 600,
-    easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
-  },
 }
 
 export type RevealRowClassNames = {
