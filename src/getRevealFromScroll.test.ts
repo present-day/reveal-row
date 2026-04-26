@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { getRevealFromScroll } from './getRevealFromScroll'
+import { getRevealFromScroll, getScrollClosed } from './getRevealFromScroll'
 import { REVEAL_MODE, REVEAL_POSITION } from './types'
 
 describe('getRevealFromScroll', () => {
@@ -57,5 +57,19 @@ describe('getRevealFromScroll', () => {
     expect(getRevealFromScroll(0, 0, 50, 50, REVEAL_MODE.both)).toBe(
       REVEAL_POSITION.center,
     )
+  })
+})
+
+describe('getScrollClosed', () => {
+  it('returns 0 for right mode', () => {
+    expect(getScrollClosed(88, 50, 200, REVEAL_MODE.right)).toBe(0)
+  })
+
+  it('returns wL for left mode', () => {
+    expect(getScrollClosed(88, 50, 200, REVEAL_MODE.left)).toBe(88)
+  })
+
+  it('returns wL for both mode', () => {
+    expect(getScrollClosed(88, 50, 200, REVEAL_MODE.both)).toBe(88)
   })
 })

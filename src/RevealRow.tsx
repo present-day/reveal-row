@@ -32,7 +32,7 @@ function cx(...parts: (string | undefined)[]) {
   return parts.filter(Boolean).join(' ')
 }
 
-function getMaxScroll(el: HTMLDivElement) {
+function getMaxScroll(el: HTMLElement) {
   return Math.max(0, el.scrollWidth - el.clientWidth)
 }
 
@@ -104,6 +104,7 @@ function RevealRowInner({
   children,
   left,
   right,
+  as: Element = 'div',
   mode: modeProp,
   actionWidthLeft: wLIn,
   actionWidthRight: wRIn,
@@ -383,7 +384,7 @@ function RevealRowInner({
   )
 
   const handleScroll = useCallback(
-    (e: UIEvent<HTMLDivElement>) => {
+    (e: UIEvent<HTMLElement>) => {
       onScrollProp?.(e)
       const el = containerRef.current
       if (!el) return
@@ -500,7 +501,7 @@ function RevealRowInner({
   )
 
   return (
-    <div
+    <Element
       ref={containerRef}
       data-reveal-mode={mode}
       className={cx(classNames.root, className)}
@@ -533,7 +534,7 @@ function RevealRowInner({
           {right}
         </div>
       ) : null}
-    </div>
+    </Element>
   )
 }
 
