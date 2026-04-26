@@ -7,6 +7,7 @@ export type {
   RevealMode,
   RevealPosition,
   RevealRowClassNames,
+  RevealRowElement,
   RevealRowHandle,
   RevealRowProps,
 } from './types'
@@ -16,4 +17,5 @@ export {
   REVEAL_HANDLE_POSITION,
   REVEAL_MODE,
   REVEAL_POSITION,
+  REVEAL_ROW_ELEMENTS,
 } from './types'

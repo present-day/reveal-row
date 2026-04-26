@@ -25,6 +25,21 @@ export const REVEAL_HANDLE_POSITION = {
 export type RevealHandlePosition =
   (typeof REVEAL_HANDLE_POSITION)[keyof typeof REVEAL_HANDLE_POSITION]
 
+export const REVEAL_ROW_ELEMENTS = {
+  div: 'div',
+  section: 'section',
+  article: 'article',
+  main: 'main',
+  aside: 'aside',
+  header: 'header',
+  footer: 'footer',
+  nav: 'nav',
+  li: 'li',
+} as const
+
+export type RevealRowElement =
+  (typeof REVEAL_ROW_ELEMENTS)[keyof typeof REVEAL_ROW_ELEMENTS]
+
 export const ANIMATION_PRESET = {
   none: 'none',
   quick: 'quick',
@@ -73,6 +88,11 @@ export type RevealRowProps = {
    */
   right?: ReactNode
   /**
+   * The HTML element to use for the root container.
+   * @default 'div'
+   */
+  as?: RevealRowElement
+  /**
    * If both `left` and `right` are set, defaults to `both`. If only one side,
    * mode is derived unless overridden.
    */
@@ -94,7 +114,7 @@ export type RevealRowProps = {
   handleAriaLabel?: string
   /** Fires when the settled position changes. */
   onRevealChange?: (position: RevealPosition) => void
-  onScroll?: (event: UIEvent<HTMLDivElement>) => void
+  onScroll?: (event: UIEvent<HTMLElement>) => void
   /** Resets to closed; default true. */
   resetWhenDisabled?: boolean
   disabled?: boolean
