@@ -134,6 +134,8 @@ function RevealRowInner({
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasAppliedInitialScroll = useRef(false)
   const isAnimatingRef = useRef(false)
+  const rafIdRef = useRef<number | null>(null)
+  const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const readPosition = useCallback((): RevealPosition => {
     const el = containerRef.current
@@ -168,9 +170,23 @@ function RevealRowInner({
 
       const { duration, easing } = animationOptions
 
-      if (duration === 0) {
+      // Clamp and normalize duration
+      const clampedDuration =
+        Number.isFinite(duration) && duration > 0 ? duration : 0
+
+      if (clampedDuration === 0) {
         el.scrollLeft = targetScrollLeft
         return
+      }
+
+      // Cancel any existing animation
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current)
+        rafIdRef.current = null
+      }
+      if (settleTimerRef.current !== null) {
+        clearTimeout(settleTimerRef.current)
+        settleTimerRef.current = null
       }
 
       // Disable scroll snap during animation
@@ -184,7 +200,7 @@ function RevealRowInner({
 
       const animate = (currentTime: number) => {
         const elapsed = currentTime - startTime
-        const progress = Math.min(elapsed / duration, 1)
+        const progress = Math.min(elapsed / clampedDuration, 1)
 
         let easedProgress = progress
         if (easing === 'ease-out') {
@@ -214,16 +230,17 @@ function RevealRowInner({
         el.scrollLeft = startScrollLeft + distance * easedProgress
 
         if (progress < 1) {
-          requestAnimationFrame(animate)
+          rafIdRef.current = requestAnimationFrame(animate)
         } else {
           el.scrollLeft = targetScrollLeft
           // Re-enable scroll snap after animation completes
           el.style.scrollSnapType = originalScrollSnapType || 'x mandatory'
           isAnimatingRef.current = false
+          rafIdRef.current = null
         }
       }
 
-      requestAnimationFrame(animate)
+      rafIdRef.current = requestAnimationFrame(animate)
     },
     [],
   )
@@ -247,12 +264,16 @@ function RevealRowInner({
 
         // Update position after animation or immediately if no animation
         const delay = animConfig.duration > 0 ? animConfig.duration : 0
-        setTimeout(() => {
+        if (settleTimerRef.current !== null) {
+          clearTimeout(settleTimerRef.current)
+        }
+        settleTimerRef.current = setTimeout(() => {
           const p = readPosition()
           if (lastEmitted.current !== p) {
             lastEmitted.current = p
             onRevealChange?.(p)
           }
+          settleTimerRef.current = null
         }, delay)
       },
       reveal: (
@@ -289,10 +310,14 @@ function RevealRowInner({
 
         // Update position after animation or immediately if no animation
         const delay = animConfig.duration > 0 ? animConfig.duration : 0
-        setTimeout(() => {
+        if (settleTimerRef.current !== null) {
+          clearTimeout(settleTimerRef.current)
+        }
+        settleTimerRef.current = setTimeout(() => {
           const p = getRevealFromScroll(targetScroll, max, wL, wR, mode)
           lastEmitted.current = p
           onRevealChange?.(p)
+          settleTimerRef.current = null
         }, delay)
       },
     }),
@@ -340,6 +365,12 @@ function RevealRowInner({
     () => () => {
       if (debounceTimer.current) {
         clearTimeout(debounceTimer.current)
+      }
+      if (rafIdRef.current !== null) {
+        cancelAnimationFrame(rafIdRef.current)
+      }
+      if (settleTimerRef.current !== null) {
+        clearTimeout(settleTimerRef.current)
       }
     },
     [],
