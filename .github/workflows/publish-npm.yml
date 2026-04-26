@@ -30,11 +30,10 @@ jobs:
       - run: bun run test:coverage
       - run: bun run build
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
       - name: Publish to npm (OIDC)
-        # --loglevel=verbose surfaces the trusted-publishing OIDC exchange so
-        # misconfigurations show up as real diagnostics instead of a misleading
-        # ENEEDAUTH / 404 (see https://github.com/npm/cli/issues/9088).
-        run: npm publish --provenance --loglevel=verbose
-        env:
-          # Avoid any token from the job / org secrets shadowing trusted publishing.
-          NODE_AUTH_TOKEN: ""
+        run: npm publish --provenance --access public
