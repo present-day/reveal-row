@@ -27,7 +27,7 @@ jobs:
           bun-version: latest
 
       - run: bun install --frozen-lockfile
-      - run: bun run test:run
+      - run: bun run test:coverage
       - run: bun run build
 
       - name: Publish to npm (OIDC)
