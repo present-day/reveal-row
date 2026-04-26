@@ -2,6 +2,9 @@
 
 Horizontally scrollable row that reveals one or two action columns — **right**, **left**, or **both** sides. Three snap positions: left · center · right. Styling is entirely via `classNames` props (no bundled CSS). Scroll physics use inline `style` on the scroll track so the component works with zero external CSS.
 
+<img width="295" height="640" alt="Simulator Screen Recording - iPhone 15 - 2026-04-25 at 22 26 41" src="https://github.com/user-attachments/assets/932021d4-5224-479f-9df9-c7045bf12afb" style="float:right" />
+
+
 ## Install
 
 ```bash
