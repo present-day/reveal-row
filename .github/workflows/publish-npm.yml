@@ -20,7 +20,7 @@ jobs:
     # same name. If you leave the comment below out, the npm side must have Environment empty.
     # environment: <ENV_NAME>
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: oven-sh/setup-bun@v2
         with:
