@@ -8,6 +8,8 @@ Horizontally scrollable row that reveals one or two action columns — **right**
 ## Install
 
 ```bash
+bun add @present-day/reveal-row
+# or
 npm i @present-day/reveal-row
 ```
 
