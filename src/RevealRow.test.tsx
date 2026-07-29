@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RevealRow } from './RevealRow'
 import {
@@ -581,11 +581,11 @@ describe('RevealRow', () => {
 
   describe('imperative API', () => {
     it('exposes close method through ref', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -594,16 +594,16 @@ describe('RevealRow', () => {
       )
 
       expect(handle).toBeTruthy()
-      expect(typeof handle?.close).toBe('function')
-      expect(typeof handle?.reveal).toBe('function')
+      expect(typeof handle.current?.close).toBe('function')
+      expect(typeof handle.current?.reveal).toBe('function')
     })
 
     it('close method can be called without error', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -611,15 +611,15 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.close()).not.toThrow()
+      expect(() => handle.current?.close()).not.toThrow()
     })
 
     it('reveal method can reveal left position', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -627,15 +627,15 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.reveal(REVEAL_POSITION.left)).not.toThrow()
+      expect(() => handle.current?.reveal(REVEAL_POSITION.left)).not.toThrow()
     })
 
     it('reveal method can reveal right position', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           right={<div>Right action</div>}
         >
@@ -643,15 +643,15 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.reveal(REVEAL_POSITION.right)).not.toThrow()
+      expect(() => handle.current?.reveal(REVEAL_POSITION.right)).not.toThrow()
     })
 
     it('reveal method can reveal center position', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -659,15 +659,15 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.reveal(REVEAL_POSITION.center)).not.toThrow()
+      expect(() => handle.current?.reveal(REVEAL_POSITION.center)).not.toThrow()
     })
 
     it('reveal method ignores invalid positions for mode', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           mode={REVEAL_MODE.left}
           left={<div>Left action</div>}
@@ -676,7 +676,7 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.reveal(REVEAL_POSITION.right)).not.toThrow()
+      expect(() => handle.current?.reveal(REVEAL_POSITION.right)).not.toThrow()
     })
   })
 
@@ -692,11 +692,11 @@ describe('RevealRow', () => {
     })
 
     it('uses default animation preset', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -704,15 +704,15 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.close()).not.toThrow()
+      expect(() => handle.current?.close()).not.toThrow()
     })
 
     it('accepts custom animation preset', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           animationPreset={ANIMATION_PRESET.smooth}
           left={<div>Left action</div>}
@@ -721,15 +721,15 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.close()).not.toThrow()
+      expect(() => handle.current?.close()).not.toThrow()
     })
 
     it('accepts custom animation config', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           animationConfig={{ duration: 500, easing: 'linear' }}
           left={<div>Left action</div>}
@@ -738,15 +738,15 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.close()).not.toThrow()
+      expect(() => handle.current?.close()).not.toThrow()
     })
 
     it('handles zero duration animation', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       const { container } = render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -766,17 +766,17 @@ describe('RevealRow', () => {
         },
       })
 
-      handle?.close(false) // No animation
+      handle.current?.close(false) // No animation
 
       expect(scrollToSpy).toHaveBeenCalled()
     })
 
     it('handles animated close with preset', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -784,15 +784,15 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
 
-      expect(() => handle?.close(ANIMATION_PRESET.quick)).not.toThrow()
+      expect(() => handle.current?.close(ANIMATION_PRESET.quick)).not.toThrow()
     })
 
     it('handles animated reveal with custom config', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -801,7 +801,7 @@ describe('RevealRow', () => {
       )
 
       expect(() =>
-        handle?.reveal(REVEAL_POSITION.left, {
+        handle.current?.reveal(REVEAL_POSITION.left, {
           duration: 300,
           easing: 'ease-in',
         }),
@@ -809,11 +809,11 @@ describe('RevealRow', () => {
     })
 
     it('handles cubic-bezier easing animation', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -822,7 +822,7 @@ describe('RevealRow', () => {
       )
 
       expect(() =>
-        handle?.close({
+        handle.current?.close({
           duration: 100,
           easing: 'cubic-bezier(0.68, -0.55, 0.265, 1.55)',
         }),
@@ -830,11 +830,11 @@ describe('RevealRow', () => {
     })
 
     it('handles other cubic-bezier easing animation', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -843,7 +843,7 @@ describe('RevealRow', () => {
       )
 
       expect(() =>
-        handle?.close({
+        handle.current?.close({
           duration: 100,
           easing: 'cubic-bezier(0.25, 0.1, 0.25, 1)',
         }),
@@ -852,12 +852,12 @@ describe('RevealRow', () => {
 
     it('calls onRevealChange after animated reveal completes', () => {
       const onRevealChange = vi.fn()
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
 
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           onRevealChange={onRevealChange}
           left={<div>Left action</div>}
@@ -868,7 +868,10 @@ describe('RevealRow', () => {
 
       onRevealChange.mockClear()
 
-      handle?.reveal(REVEAL_POSITION.left, { duration: 10, easing: 'linear' })
+      handle.current?.reveal(REVEAL_POSITION.left, {
+        duration: 10,
+        easing: 'linear',
+      })
 
       // Fast forward time to complete animation
       vi.advanceTimersByTime(20)
@@ -878,12 +881,12 @@ describe('RevealRow', () => {
 
     it('calls onRevealChange after animated close completes', () => {
       const onRevealChange = vi.fn()
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
 
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           onRevealChange={onRevealChange}
           left={<div>Left action</div>}
@@ -894,7 +897,7 @@ describe('RevealRow', () => {
 
       onRevealChange.mockClear()
 
-      handle?.close({ duration: 10, easing: 'linear' })
+      handle.current?.close({ duration: 10, easing: 'linear' })
 
       // Fast forward time to complete animation
       vi.advanceTimersByTime(20)
@@ -1045,11 +1048,11 @@ describe('RevealRow', () => {
 
   describe('utility functions and edge cases', () => {
     it('handles invalid duration in animation config', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -1058,11 +1061,11 @@ describe('RevealRow', () => {
       )
 
       expect(() =>
-        handle?.close({ duration: NaN, easing: 'linear' }),
+        handle.current?.close({ duration: NaN, easing: 'linear' }),
       ).not.toThrow()
 
       expect(() =>
-        handle?.close({ duration: -100, easing: 'linear' }),
+        handle.current?.close({ duration: -100, easing: 'linear' }),
       ).not.toThrow()
     })
 
@@ -1077,11 +1080,11 @@ describe('RevealRow', () => {
     })
 
     it('handles missing container ref in callbacks', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       const { unmount } = render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -1092,12 +1095,12 @@ describe('RevealRow', () => {
       // Unmount component to test null checks
       unmount()
 
-      expect(() => handle?.close()).not.toThrow()
-      expect(() => handle?.reveal(REVEAL_POSITION.left)).not.toThrow()
+      expect(() => handle.current?.close()).not.toThrow()
+      expect(() => handle.current?.reveal(REVEAL_POSITION.left)).not.toThrow()
     })
 
     it('handles animation with zero or invalid progress', () => {
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       vi.spyOn(performance, 'now')
         .mockReturnValueOnce(0)
         .mockReturnValueOnce(1000) // Very large elapsed time
@@ -1105,7 +1108,7 @@ describe('RevealRow', () => {
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -1114,7 +1117,7 @@ describe('RevealRow', () => {
       )
 
       expect(() =>
-        handle?.close({ duration: 10, easing: 'linear' }),
+        handle.current?.close({ duration: 10, easing: 'linear' }),
       ).not.toThrow()
     })
 
@@ -1174,11 +1177,11 @@ describe('RevealRow', () => {
     it('handles animation with different easing types', () => {
       vi.useFakeTimers()
 
-      let handle: RevealRowHandle | null = null
+      const handle: { current: RevealRowHandle | null } = { current: null }
       render(
         <RevealRow
           ref={(ref) => {
-            handle = ref
+            handle.current = ref
           }}
           left={<div>Left action</div>}
         >
@@ -1187,17 +1190,17 @@ describe('RevealRow', () => {
       )
 
       expect(() =>
-        handle?.close({ duration: 10, easing: 'ease-out' }),
+        handle.current?.close({ duration: 10, easing: 'ease-out' }),
       ).not.toThrow()
       vi.advanceTimersByTime(15)
 
       expect(() =>
-        handle?.close({ duration: 10, easing: 'ease-in-out' }),
+        handle.current?.close({ duration: 10, easing: 'ease-in-out' }),
       ).not.toThrow()
       vi.advanceTimersByTime(15)
 
       expect(() =>
-        handle?.close({ duration: 10, easing: 'linear' }),
+        handle.current?.close({ duration: 10, easing: 'linear' }),
       ).not.toThrow()
       vi.advanceTimersByTime(15)
 
