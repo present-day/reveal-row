@@ -18,6 +18,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test-setup.ts"],
   "exclude": ["node_modules", "dist"]
 }
