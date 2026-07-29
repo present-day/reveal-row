@@ -43,6 +43,9 @@ describe('DefaultHandleIcon', () => {
 
     circles.forEach((circle, index) => {
       const expected = expectedPositions[index]
+      if (!expected) {
+        throw new Error(`Missing expected position for circle ${index}`)
+      }
       expect(circle).toHaveAttribute('cx', expected.cx)
       expect(circle).toHaveAttribute('cy', expected.cy)
       expect(circle).toHaveAttribute('r', expected.r)
