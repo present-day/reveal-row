@@ -1,9 +1,27 @@
-# `@present-day/reveal-row`
+# RevealRow
 
-Horizontally scrollable row that reveals one or two action columns — **right**, **left**, or **both** sides. Three snap positions: left · center · right. Styling is entirely via `classNames` props (no bundled CSS). Scroll physics use inline `style` on the scroll track so the component works with zero external CSS.
+**Buttery swipe-to-reveal actions for React lists — powered by native scroll physics, not JavaScript animation.**
 
-<img width="295" height="640" alt="Simulator Screen Recording - iPhone 15 - 2026-04-25 at 22 26 41" src="https://github.com/user-attachments/assets/932021d4-5224-479f-9df9-c7045bf12afb" style="float:right" />
+[![npm version](https://img.shields.io/npm/v/@present-day/reveal-row?color=cb3837&logo=npm)](https://www.npmjs.com/package/@present-day/reveal-row)
+[![CI](https://github.com/present-day/reveal-row/actions/workflows/ci.yml/badge.svg)](https://github.com/present-day/reveal-row/actions/workflows/ci.yml)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@present-day/reveal-row?label=gzip)](https://bundlephobia.com/package/@present-day/reveal-row)
+[![types](https://img.shields.io/npm/types/@present-day/reveal-row)](https://www.npmjs.com/package/@present-day/reveal-row)
+[![license](https://img.shields.io/npm/l/@present-day/reveal-row)](./LICENSE)
 
+The swipe-to-delete pattern everyone knows from iOS Mail — as a headless React component. Swipe (or drag, or scroll) a row horizontally to reveal action buttons on the **right**, the **left**, or **both** sides, with three crisp snap positions: left · center · right.
+
+**[▶ Try the live playground](https://present-day.github.io/reveal-row/)**
+
+<img width="295" height="640" alt="RevealRow demo — swiping a list row to reveal actions" src="https://github.com/user-attachments/assets/932021d4-5224-479f-9df9-c7045bf12afb" />
+
+## Why RevealRow?
+
+- 🍦 **Native scroll physics** — momentum, rubber-banding, and snap come from the browser's own scroll engine (CSS scroll-snap), not a JS animation loop. It feels right because it *is* the real thing.
+- 🎨 **Headless & unstyled** — no bundled CSS. Every sub-element takes your class names, so it drops into Tailwind, CSS Modules, or plain CSS without a fight.
+- 📱 **Touch, trackpad, and mouse** — one component, every input. Works inside vertically scrolling lists without gesture conflicts.
+- 🪶 **Tiny & dependency-free** — just `react` and `react-dom` as peers. Tree-shakeable, `sideEffects: false`, ESM + CJS + types.
+- ♿ **Accessible by default** — focus-driven reveal for keyboard users, `prefers-reduced-motion` support, configurable ARIA labels, and a click-guard so a swipe never fires an accidental row activation.
+- 🎛️ **Fully controllable** — imperative ref API (`reveal('left')`, `close()`), settled-position callbacks, and a `disabled`/`isActive` protocol for coordinating whole lists.
 
 ## Install
 
@@ -15,7 +33,7 @@ npm i @present-day/reveal-row
 
 Peer dependencies: `react`, `react-dom` (v18 or v19).
 
-## Basic usage
+## Quick start
 
 ```tsx
 import { RevealRow } from '@present-day/reveal-row'
@@ -39,6 +57,34 @@ import { RevealRow } from '@present-day/reveal-row'
 </RevealRow>
 ```
 
+## Multiple actions per side
+
+A side slot is a single column that **auto-sizes to its content** (with an 88px floor) — to show several buttons (iOS Mail-style Delete + Pin), lay them out with flex and give each button its own width. No math required:
+
+```tsx
+<RevealRow
+  right={
+    <div style={{ display: 'flex', height: '100%' }}>
+      <button style={{ width: 88 }} onClick={handleDelete}>Delete</button>
+      <button style={{ width: 88 }} onClick={handlePin}>Pin</button>
+    </div>
+  }
+>
+  <MyRowContent />
+</RevealRow>
+```
+
+Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-width column, exactly as before.
+
+**[▶ See it live in the playground](https://present-day.github.io/reveal-row/)** under "Multiple actions".
+
+## Accessibility
+
+- **Focus-driven reveal** — tabbing into an off-screen action button snaps that side cleanly into view (instead of the browser's un-snapped scroll-into-view). When focus leaves the row, a focus-initiated reveal closes again — so keyboard users never leave rows stuck open. Swipe-opened rows are not affected by focus loss.
+- **Reduced motion** — preset animations become instant under `prefers-reduced-motion: reduce`. An explicit `animationConfig` is treated as an intentional override and left untouched.
+- **State hooks for styling and testing** — the root carries `data-reveal-position="left | center | right"` (settled position) alongside `data-reveal-mode`.
+- **Screen readers** — the drag handle is decorative (`aria-hidden`) with a configurable sr-only description (`handleAriaLabel`).
+
 ## Modes
 
 | `mode`  | Slots used           | Resting ("closed") scroll                   |
@@ -57,8 +103,8 @@ Omit `mode` and it's inferred: both slots → `both`, only `left` → `left`, ot
 | `left` | `ReactNode` | — | Leading action column |
 | `right` | `ReactNode` | — | Trailing action column |
 | `mode` | `'left' \| 'right' \| 'both'` | inferred | Override mode detection |
-| `actionWidthLeft` | `number` | `88` | Width (px) of the left column |
-| `actionWidthRight` | `number` | `88` | Width (px) of the right column |
+| `actionWidthLeft` | `number` | auto (min 88px) | Fixed width (px) of the left column; omit to size to content |
+| `actionWidthRight` | `number` | auto (min 88px) | Fixed width (px) of the right column; omit to size to content |
 | `classNames` | `RevealRowClassNames` | `{}` | Class names for each sub-element |
 | `showHandle` | `boolean` | `true` | Render the default 6-dot drag affordance |
 | `handle` | `ReactNode` | — | Replace the default handle with custom content |
@@ -89,9 +135,9 @@ ref.current?.reveal('right')           // snap to right action
 ref.current?.reveal('center')          // alias for close
 ```
 
-## classNames
+## Styling with classNames
 
-All sub-elements accept class names for styling:
+All sub-elements accept class names, so styling is entirely yours:
 
 ```tsx
 <RevealRow
@@ -115,6 +161,37 @@ All sub-elements accept class names for styling:
 
 **Preventing row activation on swipe** — the component guards against triggering a click after a horizontal drag. If you wrap the row in a command palette item or similar, keep the built-in `onClickCapture` behaviour intact, or replicate it.
 
-## Publishing
+**Focus styles** — the row root is a scroll container, and CSS clips anything drawn outside the scrollport, including focus outlines (on both axes). Draw focus rings *inward* on action buttons and row content: `outline-offset: -2px`, or Tailwind's `focus-visible:ring-2 focus-visible:ring-inset`.
+
+**Single-axis scrolling** — the root pins `overflow-y: hidden` so rows only ever scroll horizontally; vertical overflow clips instead of scrolling.
+
+**Rounded list corners** — don't rely on a parent's `overflow: hidden` + `border-radius` to clip action buttons: scroll containers are composited on their own layers, and browsers can skip ancestor rounded clipping mid-scroll, exposing square button corners. Instead, put the matching radius on the buttons that touch the container's edges — the outermost button of the group, on the first and last rows only. Drive it from a token so the radius stays in one place:
+
+```css
+:root { --row-radius: 12px; }
+.list { border-radius: var(--row-radius); }
+.list > :first-child [data-reveal-row-right] button:last-child { border-top-right-radius: var(--row-radius); }
+.list > :last-child  [data-reveal-row-right] button:last-child { border-bottom-right-radius: var(--row-radius); }
+.list > :first-child [data-reveal-row-left]  button:first-child { border-top-left-radius: var(--row-radius); }
+.list > :last-child  [data-reveal-row-left]  button:first-child { border-bottom-left-radius: var(--row-radius); }
+```
+
+The playground implements the same idea with an index-aware helper (`edgeCorners` in `playground/src/PlaygroundApp.tsx`).
+
+## CSS tokens
+
+The component is headless, but its one built-in dimension is themeable via a CSS custom property:
+
+| Token | Default | Effect |
+| ----- | ------- | ------ |
+| `--reveal-row-action-min-width` | `88px` | Minimum width of an auto-sized action column (the floor under content-based sizing) |
+
+Set it on `:root` or any ancestor: `[data-reveal-mode] { --reveal-row-action-min-width: 72px; }`. Explicit `actionWidthLeft`/`actionWidthRight` props bypass the token. The playground layers its own tokens on top (`--row-radius`, `--action-width`) in `playground/index.html` — retheme everything from one place.
+
+## Publishing (maintainers)
 
 Run `bun run build` to produce `dist/`. The `exports` field in `package.json` points to `dist/index.{js,mjs,d.ts}`. Push a tag to trigger the GitHub Actions publish workflow (OIDC trusted publishing — no npm token needed in secrets).
+
+## License
+
+[MIT](./LICENSE) © [Present Day](https://presentday.io)

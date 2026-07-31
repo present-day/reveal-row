@@ -97,7 +97,15 @@ export type RevealRowProps = {
    * mode is derived unless overridden.
    */
   mode?: RevealMode
+  /**
+   * Fixed width (px) of the left action column. Omit to size the column to
+   * its content with an 88px floor (`minmax(88px, max-content)`).
+   */
   actionWidthLeft?: number
+  /**
+   * Fixed width (px) of the right action column. Omit to size the column to
+   * its content with an 88px floor (`minmax(88px, max-content)`).
+   */
   actionWidthRight?: number
   classNames?: RevealRowClassNames
   /** @default true */

@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@present-day/reveal-row playground</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        /* Design tokens — change these to retheme the whole playground. */
+        --row-radius: 0.75rem; /* card corners + edge action buttons */
+        --action-width: 88px; /* action button width */
+        --reveal-row-action-min-width: var(--action-width); /* library floor */
+      }
+    </style>
   </head>
   <body class="m-0 min-h-dvh bg-zinc-100 text-zinc-900 antialiased">
     <div id="root"></div>
