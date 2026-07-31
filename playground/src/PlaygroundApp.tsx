@@ -31,7 +31,7 @@ function ActionButton({
     <button
       type="button"
       onClick={onClick}
-      className={`h-full w-full text-sm font-medium text-white ${color} flex items-center justify-center gap-1`}
+      className={`h-full w-full text-sm font-medium text-white ${color} flex items-center justify-center gap-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80`}
     >
       {label}
     </button>
@@ -140,9 +140,10 @@ export function PlaygroundApp() {
       <section className="mb-8">
         <SectionTitle>Multiple actions</SectionTitle>
         <Description>
-          More than one button per side, iOS Mail-style. The side slot is a
-          single column — lay buttons out with flex inside it and set{' '}
-          <code>actionWidthRight={176}</code> to the total width (2 × 88px).
+          More than one button per side, iOS Mail-style. No width math: the
+          column auto-sizes to its content — each button just declares its own
+          width. Try keyboard Tab: focus snaps the actions into view, and moving
+          focus to another row closes this one.
         </Description>
         <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
           {ITEMS.slice(0, 2).map((item, i) => {
@@ -155,19 +156,22 @@ export function PlaygroundApp() {
                     if (el) refMap.current.set(id, el)
                     else refMap.current.delete(id)
                   }}
-                  actionWidthRight={176}
                   right={
                     <div className="flex h-full">
-                      <ActionButton
-                        label="Delete"
-                        color="bg-red-500"
-                        onClick={() => handleAction(id, 'delete')}
-                      />
-                      <ActionButton
-                        label="Pin"
-                        color="bg-amber-500"
-                        onClick={() => handleAction(id, 'pin')}
-                      />
+                      <div className="w-[88px]">
+                        <ActionButton
+                          label="Delete"
+                          color="bg-red-500"
+                          onClick={() => handleAction(id, 'delete')}
+                        />
+                      </div>
+                      <div className="w-[88px]">
+                        <ActionButton
+                          label="Pin"
+                          color="bg-amber-500"
+                          onClick={() => handleAction(id, 'pin')}
+                        />
+                      </div>
                     </div>
                   }
                   onRevealChange={(pos) => onRevealChange(id, pos)}

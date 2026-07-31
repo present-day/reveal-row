@@ -1,6 +1,12 @@
 'use client'
 
-import type { CSSProperties, ForwardedRef, MouseEvent, UIEvent } from 'react'
+import type {
+  CSSProperties,
+  FocusEvent,
+  ForwardedRef,
+  MouseEvent,
+  UIEvent,
+} from 'react'
 import {
   forwardRef,
   useCallback,
@@ -8,6 +14,7 @@ import {
   useImperativeHandle,
   useLayoutEffect,
   useRef,
+  useState,
 } from 'react'
 
 import { DefaultHandleIcon } from './DefaultHandleIcon'
@@ -47,21 +54,42 @@ function resolveMode(
   return REVEAL_MODE.right
 }
 
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' &&
+    typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
 function resolveAnimationConfig(
   animated: boolean | AnimationPreset | AnimationConfig | undefined,
   defaultPreset: AnimationPreset,
   customConfig?: AnimationConfig,
 ): AnimationConfig {
   let config: AnimationConfig
+  // An explicit AnimationConfig object is an intentional override and is not
+  // reduced; booleans and presets defer to the OS reduced-motion setting.
+  let explicit = false
 
   if (animated === false) {
     config = ANIMATION_PRESETS[ANIMATION_PRESET.none]
   } else if (animated === true || animated === undefined) {
-    config = customConfig || ANIMATION_PRESETS[defaultPreset]
+    if (customConfig) {
+      config = customConfig
+      explicit = true
+    } else {
+      config = ANIMATION_PRESETS[defaultPreset]
+    }
   } else if (typeof animated === 'string') {
     config = ANIMATION_PRESETS[animated]
   } else {
     config = animated
+    explicit = true
+  }
+
+  if (!explicit && prefersReducedMotion()) {
+    return { ...config, duration: 0 }
   }
 
   // Validate and clamp duration to be >= 0
@@ -80,6 +108,9 @@ const restEpsilon = 2
 const rootScrollStyle: CSSProperties = {
   display: 'grid',
   overflowX: 'auto',
+  // `overflow-x: auto` would otherwise force `overflow-y` to compute to
+  // `auto` — pin it so rows only ever scroll on one axis.
+  overflowY: 'hidden',
   scrollSnapType: 'x mandatory',
   scrollbarWidth: 'none',
   WebkitOverflowScrolling: 'touch',
@@ -128,8 +159,6 @@ function RevealRowInner({
   const mode = resolveMode(left, right, modeProp)
   const hasL = mode === REVEAL_MODE.left || mode === REVEAL_MODE.both
   const hasR = mode === REVEAL_MODE.right || mode === REVEAL_MODE.both
-  const wL = hasL ? (wLIn ?? 88) : 0
-  const wR = hasR ? (wRIn ?? 88) : 0
 
   const handlePosition: RevealHandlePosition =
     handlePositionProp ??
@@ -142,6 +171,24 @@ function RevealRowInner({
   const rightRef = useRef<HTMLDivElement>(null)
   const lastEmitted = useRef<RevealPosition | null>(null)
   const swipedRef = useRef(false)
+  const focusRevealedRef = useRef(false)
+  const [settledPosition, setSettledPosition] = useState<RevealPosition>(
+    REVEAL_POSITION.center,
+  )
+
+  // Effective action-column widths. With an explicit prop this is a constant;
+  // without one the column is content-sized (minmax(88px, max-content) track)
+  // and the rendered width is read live — only ever inside handlers that
+  // already read layout, so no extra reflow cost. `|| 88` covers pre-mount
+  // and environments without layout.
+  const getWL = useCallback(
+    () => (hasL ? (wLIn ?? (leftRef.current?.offsetWidth || 88)) : 0),
+    [hasL, wLIn],
+  )
+  const getWR = useCallback(
+    () => (hasR ? (wRIn ?? (rightRef.current?.offsetWidth || 88)) : 0),
+    [hasR, wRIn],
+  )
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasAppliedInitialScroll = useRef(false)
   const isAnimatingRef = useRef(false)
@@ -151,11 +198,18 @@ function RevealRowInner({
   const readPosition = useCallback((): RevealPosition => {
     const el = containerRef.current
     if (!el) return REVEAL_POSITION.center
-    return getRevealFromScroll(el.scrollLeft, getMaxScroll(el), wL, wR, mode)
-  }, [wL, wR, mode])
+    return getRevealFromScroll(
+      el.scrollLeft,
+      getMaxScroll(el),
+      getWL(),
+      getWR(),
+      mode,
+    )
+  }, [getWL, getWR, mode])
 
   const emitReveal = useCallback(
     (position: RevealPosition) => {
+      setSettledPosition(position)
       if (lastEmitted.current === position) return
       lastEmitted.current = position
       onRevealChange?.(position)
@@ -167,12 +221,12 @@ function RevealRowInner({
     const el = containerRef.current
     if (!el) return
     const m = getMaxScroll(el)
-    const closed = getScrollClosed(wL, wR, m, mode)
+    const closed = getScrollClosed(getWL(), getWR(), m, mode)
 
     // For immediate scroll, we can use the default behavior
     // CSS scroll snap will handle the final positioning
     el.scrollLeft = closed
-  }, [wL, wR, mode])
+  }, [getWL, getWR, mode])
 
   const scrollToPosition = useCallback(
     (targetScrollLeft: number, animationOptions: AnimationConfig) => {
@@ -252,92 +306,133 @@ function RevealRowInner({
     [],
   )
 
-  useImperativeHandle(
-    forwardedRef,
-    () => ({
-      close: (animated?: boolean | AnimationPreset | AnimationConfig) => {
-        const el = containerRef.current
-        if (!el) return
+  const closeRow = useCallback(
+    (animated?: boolean | AnimationPreset | AnimationConfig) => {
+      const el = containerRef.current
+      if (!el) return
 
-        const m = getMaxScroll(el)
-        const closed = getScrollClosed(wL, wR, m, mode)
-        const animConfig = resolveAnimationConfig(
-          animated,
-          animationPreset,
-          animationConfig,
-        )
+      const m = getMaxScroll(el)
+      const closed = getScrollClosed(getWL(), getWR(), m, mode)
+      const animConfig = resolveAnimationConfig(
+        animated,
+        animationPreset,
+        animationConfig,
+      )
 
-        scrollToPosition(closed, animConfig)
+      scrollToPosition(closed, animConfig)
 
-        // Update position after animation or immediately if no animation
-        const delay = animConfig.duration > 0 ? animConfig.duration : 0
-        if (settleTimerRef.current !== null) {
-          clearTimeout(settleTimerRef.current)
-        }
-        settleTimerRef.current = setTimeout(() => {
-          const p = readPosition()
-          if (lastEmitted.current !== p) {
-            lastEmitted.current = p
-            onRevealChange?.(p)
-          }
-          settleTimerRef.current = null
-        }, delay)
-      },
-      reveal: (
-        position: RevealPosition,
-        animated?: boolean | AnimationPreset | AnimationConfig,
-      ) => {
-        const el = containerRef.current
-        if (!el) return
-        const max = getMaxScroll(el)
-
-        let targetScroll: number
-        if (position === REVEAL_POSITION.center) {
-          targetScroll = getScrollClosed(wL, wR, max, mode)
-        } else if (
-          position === REVEAL_POSITION.left &&
-          (mode === REVEAL_MODE.left || mode === REVEAL_MODE.both)
-        ) {
-          targetScroll = 0
-        } else if (
-          position === REVEAL_POSITION.right &&
-          (mode === REVEAL_MODE.right || mode === REVEAL_MODE.both)
-        ) {
-          targetScroll = max
-        } else {
-          return
-        }
-
-        const animConfig = resolveAnimationConfig(
-          animated,
-          animationPreset,
-          animationConfig,
-        )
-        scrollToPosition(targetScroll, animConfig)
-
-        // Update position after animation or immediately if no animation
-        const delay = animConfig.duration > 0 ? animConfig.duration : 0
-        if (settleTimerRef.current !== null) {
-          clearTimeout(settleTimerRef.current)
-        }
-        settleTimerRef.current = setTimeout(() => {
-          const p = getRevealFromScroll(targetScroll, max, wL, wR, mode)
-          lastEmitted.current = p
-          onRevealChange?.(p)
-          settleTimerRef.current = null
-        }, delay)
-      },
-    }),
+      // Update position after animation or immediately if no animation
+      const delay = animConfig.duration > 0 ? animConfig.duration : 0
+      if (settleTimerRef.current !== null) {
+        clearTimeout(settleTimerRef.current)
+      }
+      settleTimerRef.current = setTimeout(() => {
+        emitReveal(readPosition())
+        settleTimerRef.current = null
+      }, delay)
+    },
     [
+      animationConfig,
+      animationPreset,
+      emitReveal,
+      getWL,
+      getWR,
       mode,
-      onRevealChange,
       readPosition,
       scrollToPosition,
-      wL,
-      wR,
-      animationPreset,
-      animationConfig,
     ],
+  )
+
+  const revealRow = useCallback(
+    (
+      position: RevealPosition,
+      animated?: boolean | AnimationPreset | AnimationConfig,
+    ) => {
+      const el = containerRef.current
+      if (!el) return
+      const max = getMaxScroll(el)
+      const wL = getWL()
+      const wR = getWR()
+
+      let targetScroll: number
+      if (position === REVEAL_POSITION.center) {
+        targetScroll = getScrollClosed(wL, wR, max, mode)
+      } else if (
+        position === REVEAL_POSITION.left &&
+        (mode === REVEAL_MODE.left || mode === REVEAL_MODE.both)
+      ) {
+        targetScroll = 0
+      } else if (
+        position === REVEAL_POSITION.right &&
+        (mode === REVEAL_MODE.right || mode === REVEAL_MODE.both)
+      ) {
+        targetScroll = max
+      } else {
+        return
+      }
+
+      const animConfig = resolveAnimationConfig(
+        animated,
+        animationPreset,
+        animationConfig,
+      )
+      scrollToPosition(targetScroll, animConfig)
+
+      // Update position after animation or immediately if no animation
+      const delay = animConfig.duration > 0 ? animConfig.duration : 0
+      if (settleTimerRef.current !== null) {
+        clearTimeout(settleTimerRef.current)
+      }
+      settleTimerRef.current = setTimeout(() => {
+        emitReveal(getRevealFromScroll(targetScroll, max, wL, wR, mode))
+        settleTimerRef.current = null
+      }, delay)
+    },
+    [
+      animationConfig,
+      animationPreset,
+      emitReveal,
+      getWL,
+      getWR,
+      mode,
+      scrollToPosition,
+    ],
+  )
+
+  useImperativeHandle(
+    forwardedRef,
+    () => ({ close: closeRow, reveal: revealRow }),
+    [closeRow, revealRow],
+  )
+
+  // Keyboard support: tabbing into an off-screen action column snaps it
+  // cleanly into view (instead of the browser's un-snapped scroll-into-view),
+  // and a focus-initiated reveal closes again once focus leaves the row.
+  // Swipe-opened rows are untouched by focus loss.
+  const handleRootFocus = useCallback(
+    (e: FocusEvent<HTMLElement>) => {
+      const t = e.target as Node | null
+      if (!t) return
+      if (leftRef.current?.contains(t)) {
+        focusRevealedRef.current = true
+        revealRow(REVEAL_POSITION.left)
+      } else if (rightRef.current?.contains(t)) {
+        focusRevealedRef.current = true
+        revealRow(REVEAL_POSITION.right)
+      }
+    },
+    [revealRow],
+  )
+
+  const handleRootBlur = useCallback(
+    (e: FocusEvent<HTMLElement>) => {
+      if (!focusRevealedRef.current) return
+      const next = e.relatedTarget as Node | null
+      if (next && containerRef.current?.contains(next)) return
+      focusRevealedRef.current = false
+      closeRow()
+    },
+    [closeRow],
   )
 
   useLayoutEffect(() => {
@@ -347,10 +442,10 @@ function RevealRowInner({
     const el = containerRef.current
     if (!el) return
     if (!hasAppliedInitialScroll.current) {
-      el.scrollLeft = wL
+      el.scrollLeft = getWL()
       hasAppliedInitialScroll.current = true
     }
-  }, [mode, wL])
+  }, [mode, getWL])
 
   useEffect(() => {
     if (disabled && resetWhenDisabled) {
@@ -389,6 +484,8 @@ function RevealRowInner({
       const el = containerRef.current
       if (!el) return
       const m = getMaxScroll(el)
+      const wL = getWL()
+      const wR = getWR()
       const pos = getRevealFromScroll(el.scrollLeft, m, wL, wR, mode)
       const closed = getScrollClosed(wL, wR, m, mode)
       if (Math.abs(el.scrollLeft - closed) > restEpsilon) {
@@ -402,7 +499,7 @@ function RevealRowInner({
         emitReveal(pos)
       }, SCROLL_REVEAL_DEBOUNCE_MS)
     },
-    [emitReveal, mode, onScrollProp, wL, wR],
+    [emitReveal, getWL, getWR, mode, onScrollProp],
   )
 
   const onClickCapture = useCallback((e: MouseEvent) => {
@@ -421,12 +518,16 @@ function RevealRowInner({
 
   // `100%` for the main track (not `1fr`) so total row width > viewport: otherwise both
   // columns can shrink to fit with no overflow and the action stays visible.
+  // Without an explicit width the column is content-sized with an 88px floor,
+  // so stretchy content still gets the default-width column.
+  const trackL = wLIn != null ? `${wLIn}px` : 'minmax(88px, max-content)'
+  const trackR = wRIn != null ? `${wRIn}px` : 'minmax(88px, max-content)'
   const gridTemplateColumns =
     mode === REVEAL_MODE.right
-      ? `100% ${wR}px`
+      ? `100% ${trackR}`
       : mode === REVEAL_MODE.left
-        ? `${wL}px 100%`
-        : `${wL}px 100% ${wR}px`
+        ? `${trackL} 100%`
+        : `${trackL} 100% ${trackR}`
 
   const handleContent = showHandle ? (
     handleOverride !== undefined ? (
@@ -505,9 +606,12 @@ function RevealRowInner({
       // biome-ignore lint/suspicious/noExplicitAny: Required for polymorphic ref compatibility
       ref={containerRef as any}
       data-reveal-mode={mode}
+      data-reveal-position={settledPosition}
       className={cx(classNames.root, className)}
       onScroll={handleScroll}
       onClickCapture={onClickCapture}
+      onFocus={handleRootFocus}
+      onBlur={handleRootBlur}
       style={{
         ...(disabled ? rootScrollStyleDisabled : rootScrollStyle),
         ...style,
@@ -519,7 +623,11 @@ function RevealRowInner({
           ref={leftRef}
           className={classNames.left}
           data-reveal-row-left
-          style={{ ...snapStart, minWidth: 0, width: wL }}
+          style={{
+            ...snapStart,
+            minWidth: 0,
+            ...(wLIn != null ? { width: wLIn } : null),
+          }}
         >
           {left}
         </div>
@@ -530,7 +638,11 @@ function RevealRowInner({
           ref={rightRef}
           className={classNames.right}
           data-reveal-row-right
-          style={{ ...snapEnd, minWidth: 0, width: wR }}
+          style={{
+            ...snapEnd,
+            minWidth: 0,
+            ...(wRIn != null ? { width: wRIn } : null),
+          }}
         >
           {right}
         </div>
