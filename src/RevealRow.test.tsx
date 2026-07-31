@@ -315,12 +315,13 @@ describe('RevealRow', () => {
       )
       const rootElement = container.firstChild as HTMLElement
       expect(rootElement).toHaveStyle({
-        gridTemplateColumns: 'minmax(88px, max-content) 100%',
+        gridTemplateColumns: 'max-content 100%',
       })
       const leftElement = container.querySelector(
         '[data-reveal-row-left]',
       ) as HTMLElement
       expect(leftElement.style.width).toBe('')
+      expect(leftElement).toHaveStyle({ minWidth: '88px' })
     })
 
     it('uses custom width for left action', () => {
@@ -341,12 +342,13 @@ describe('RevealRow', () => {
       )
       const rootElement = container.firstChild as HTMLElement
       expect(rootElement).toHaveStyle({
-        gridTemplateColumns: '100% minmax(88px, max-content)',
+        gridTemplateColumns: '100% max-content',
       })
       const rightElement = container.querySelector(
         '[data-reveal-row-right]',
       ) as HTMLElement
       expect(rightElement.style.width).toBe('')
+      expect(rightElement).toHaveStyle({ minWidth: '88px' })
     })
 
     it('uses custom width for right action', () => {
@@ -786,6 +788,47 @@ describe('RevealRow', () => {
     })
   })
 
+  describe('animation robustness', () => {
+    it('completes animated scrolls even when rAF never fires (hidden page)', () => {
+      vi.useFakeTimers()
+      const rafSpy = vi
+        .spyOn(window, 'requestAnimationFrame')
+        .mockReturnValue(1)
+      try {
+        const handle: { current: RevealRowHandle | null } = { current: null }
+        const { container } = render(
+          <RevealRow
+            ref={(ref) => {
+              handle.current = ref
+            }}
+            right={<button type="button">Delete</button>}
+          >
+            <div>Content</div>
+          </RevealRow>,
+        )
+        const rootElement = container.firstChild as HTMLElement
+        let scrollLeft = 0
+        Object.defineProperty(rootElement, 'scrollLeft', {
+          configurable: true,
+          get: () => scrollLeft,
+          set: (v: number) => {
+            scrollLeft = v
+          },
+        })
+
+        handle.current?.reveal(REVEAL_POSITION.right, ANIMATION_PRESET.smooth)
+        // rAF is dead; the finalize timer (duration + 100ms) must land the
+        // scroll and restore snap.
+        vi.advanceTimersByTime(600)
+        expect(scrollLeft).toBe(100)
+        expect(rootElement.style.scrollSnapType).toBe('x mandatory')
+      } finally {
+        rafSpy.mockRestore()
+        vi.useRealTimers()
+      }
+    })
+  })
+
   describe('single-axis overflow', () => {
     it('pins overflow-y to hidden so rows only scroll horizontally', () => {
       const { container } = render(
@@ -1163,7 +1206,7 @@ describe('RevealRow', () => {
 
       const rootElement = container.firstChild as HTMLElement
       expect(rootElement).toHaveStyle({
-        gridTemplateColumns: 'minmax(88px, max-content) 100%',
+        gridTemplateColumns: 'max-content 100%',
       })
     })
 
@@ -1176,7 +1219,7 @@ describe('RevealRow', () => {
 
       const rootElement = container.firstChild as HTMLElement
       expect(rootElement).toHaveStyle({
-        gridTemplateColumns: '100% minmax(88px, max-content)',
+        gridTemplateColumns: '100% max-content',
       })
     })
 
@@ -1193,8 +1236,7 @@ describe('RevealRow', () => {
 
       const rootElement = container.firstChild as HTMLElement
       expect(rootElement).toHaveStyle({
-        gridTemplateColumns:
-          'minmax(88px, max-content) 100% minmax(88px, max-content)',
+        gridTemplateColumns: 'max-content 100% max-content',
       })
     })
 

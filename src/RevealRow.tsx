@@ -194,6 +194,8 @@ function RevealRowInner({
   const isAnimatingRef = useRef(false)
   const rafIdRef = useRef<number | null>(null)
   const settleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const finalizeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const originalSnapRef = useRef('')
 
   const readPosition = useCallback((): RevealPosition => {
     const el = containerRef.current
@@ -249,11 +251,37 @@ function RevealRowInner({
         clearTimeout(settleTimerRef.current)
         settleTimerRef.current = null
       }
+      if (finalizeTimerRef.current !== null) {
+        clearTimeout(finalizeTimerRef.current)
+        finalizeTimerRef.current = null
+      }
 
-      // Disable scroll snap during animation
+      // Disable scroll snap during animation. Only capture the original value
+      // when no animation is in flight — mid-animation it reads back our own
+      // 'none' and would get restored permanently.
+      if (!isAnimatingRef.current) {
+        originalSnapRef.current = el.style.scrollSnapType
+      }
       isAnimatingRef.current = true
-      const originalScrollSnapType = el.style.scrollSnapType
       el.style.scrollSnapType = 'none'
+
+      const finish = () => {
+        el.scrollLeft = targetScrollLeft
+        el.style.scrollSnapType = originalSnapRef.current || 'x mandatory'
+        isAnimatingRef.current = false
+        if (rafIdRef.current !== null) {
+          cancelAnimationFrame(rafIdRef.current)
+          rafIdRef.current = null
+        }
+        if (finalizeTimerRef.current !== null) {
+          clearTimeout(finalizeTimerRef.current)
+          finalizeTimerRef.current = null
+        }
+      }
+
+      // rAF is frozen on hidden/occluded pages — guarantee the animation
+      // completes (and snap is restored) via a timer fallback.
+      finalizeTimerRef.current = setTimeout(finish, duration + 100)
 
       const startScrollLeft = el.scrollLeft
       const distance = targetScrollLeft - startScrollLeft
@@ -293,11 +321,8 @@ function RevealRowInner({
         if (progress < 1) {
           rafIdRef.current = requestAnimationFrame(animate)
         } else {
-          el.scrollLeft = targetScrollLeft
-          // Re-enable scroll snap after animation completes
-          el.style.scrollSnapType = originalScrollSnapType || 'x mandatory'
-          isAnimatingRef.current = false
           rafIdRef.current = null
+          finish()
         }
       }
 
@@ -474,6 +499,9 @@ function RevealRowInner({
       if (settleTimerRef.current !== null) {
         clearTimeout(settleTimerRef.current)
       }
+      if (finalizeTimerRef.current !== null) {
+        clearTimeout(finalizeTimerRef.current)
+      }
     },
     [],
   )
@@ -518,10 +546,13 @@ function RevealRowInner({
 
   // `100%` for the main track (not `1fr`) so total row width > viewport: otherwise both
   // columns can shrink to fit with no overflow and the action stays visible.
-  // Without an explicit width the column is content-sized with an 88px floor,
-  // so stretchy content still gets the default-width column.
-  const trackL = wLIn != null ? `${wLIn}px` : 'minmax(88px, max-content)'
-  const trackR = wRIn != null ? `${wRIn}px` : 'minmax(88px, max-content)'
+  // Without an explicit width the column is content-sized via a `max-content`
+  // track — `minmax(88px, max-content)` would never grow, because the `100%`
+  // main track leaves no free space for minmax growth. The 88px floor for
+  // stretchy content lives on the column element's `minWidth` instead, which
+  // floors its sizing contribution to the track.
+  const trackL = wLIn != null ? `${wLIn}px` : 'max-content'
+  const trackR = wRIn != null ? `${wRIn}px` : 'max-content'
   const gridTemplateColumns =
     mode === REVEAL_MODE.right
       ? `100% ${trackR}`
@@ -625,8 +656,7 @@ function RevealRowInner({
           data-reveal-row-left
           style={{
             ...snapStart,
-            minWidth: 0,
-            ...(wLIn != null ? { width: wLIn } : null),
+            ...(wLIn != null ? { minWidth: 0, width: wLIn } : { minWidth: 88 }),
           }}
         >
           {left}
@@ -640,8 +670,7 @@ function RevealRowInner({
           data-reveal-row-right
           style={{
             ...snapEnd,
-            minWidth: 0,
-            ...(wRIn != null ? { width: wRIn } : null),
+            ...(wRIn != null ? { minWidth: 0, width: wRIn } : { minWidth: 88 }),
           }}
         >
           {right}
