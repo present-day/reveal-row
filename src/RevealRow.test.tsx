@@ -321,7 +321,9 @@ describe('RevealRow', () => {
         '[data-reveal-row-left]',
       ) as HTMLElement
       expect(leftElement.style.width).toBe('')
-      expect(leftElement).toHaveStyle({ minWidth: '88px' })
+      expect(leftElement.style.minWidth).toBe(
+        'var(--reveal-row-action-min-width, 88px)',
+      )
     })
 
     it('uses custom width for left action', () => {
@@ -348,7 +350,9 @@ describe('RevealRow', () => {
         '[data-reveal-row-right]',
       ) as HTMLElement
       expect(rightElement.style.width).toBe('')
-      expect(rightElement).toHaveStyle({ minWidth: '88px' })
+      expect(rightElement.style.minWidth).toBe(
+        'var(--reveal-row-action-min-width, 88px)',
+      )
     })
 
     it('uses custom width for right action', () => {

@@ -53,11 +53,11 @@ function edgeCorners(
 ) {
   const corners: string[] = []
   if (side === 'right') {
-    if (isFirst) corners.push('rounded-tr-xl')
-    if (isLast) corners.push('rounded-br-xl')
+    if (isFirst) corners.push('rounded-tr-[var(--row-radius)]')
+    if (isLast) corners.push('rounded-br-[var(--row-radius)]')
   } else {
-    if (isFirst) corners.push('rounded-tl-xl')
-    if (isLast) corners.push('rounded-bl-xl')
+    if (isFirst) corners.push('rounded-tl-[var(--row-radius)]')
+    if (isLast) corners.push('rounded-bl-[var(--row-radius)]')
   }
   return corners.join(' ')
 }
@@ -135,7 +135,7 @@ export function PlaygroundApp() {
           Swipe left to reveal a trailing action. Default mode when only{' '}
           <code>right</code> is provided.
         </Description>
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
           {ITEMS.slice(0, 3).map((item, i, arr) => (
             <div key={item.id}>
               {i > 0 && <Divider />}
@@ -174,7 +174,7 @@ export function PlaygroundApp() {
           width. Try keyboard Tab: focus snaps the actions into view, and moving
           focus to another row closes this one.
         </Description>
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
           {ITEMS.slice(0, 2).map((item, i, arr) => {
             const id = item.id + 30
             return (
@@ -187,14 +187,14 @@ export function PlaygroundApp() {
                   }}
                   right={
                     <div className="flex h-full">
-                      <div className="w-[88px]">
+                      <div className="w-[var(--action-width)]">
                         <ActionButton
                           label="Delete"
                           color="bg-red-500"
                           onClick={() => handleAction(id, 'delete')}
                         />
                       </div>
-                      <div className="w-[88px]">
+                      <div className="w-[var(--action-width)]">
                         <ActionButton
                           label="Pin"
                           color="bg-amber-500"
@@ -225,7 +225,7 @@ export function PlaygroundApp() {
           Swipe right to reveal a leading action. Handle sits at the leading
           edge.
         </Description>
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
           {ITEMS.slice(0, 3).map((item, i, arr) => {
             const id = item.id + 10
             return (
@@ -265,7 +265,7 @@ export function PlaygroundApp() {
           Swipe left to reveal a trailing action, right for a leading action.
           Three snap positions: left · center · right.
         </Description>
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
           {ITEMS.map((item, i, arr) => {
             const id = item.id + 20
             return (
@@ -342,7 +342,7 @@ export function PlaygroundApp() {
             close()
           </button>
         </div>
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
           <RevealRow
             ref={(el) => {
               if (el) refMap.current.set(99, el)
@@ -381,7 +381,7 @@ export function PlaygroundApp() {
           <code>actionWidthLeft={120}</code> and{' '}
           <code>actionWidthRight={64}</code> — different sizes on each side.
         </Description>
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
           <RevealRow
             left={
               <ActionButton
@@ -439,7 +439,7 @@ export function PlaygroundApp() {
         <Description>
           <code>showHandle={'{false}'}</code> — no drag affordance rendered.
         </Description>
-        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+        <div className="overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
           <RevealRow
             showHandle={false}
             right={
@@ -500,7 +500,7 @@ function AnimationDemo({ onLog }: { onLog: (text: string) => void }) {
   ]
 
   return (
-    <div className="space-y-0 overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+    <div className="space-y-0 overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
       {presets.map(({ preset, label, color }, i, arr) => (
         <div key={preset}>
           {i > 0 && <Divider />}
@@ -574,7 +574,7 @@ function DisabledDemo({ onLog }: { onLog: (text: string) => void }) {
           reveal("right")
         </button>
       </div>
-      <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+      <div className="overflow-hidden rounded-[var(--row-radius)] border border-zinc-200 bg-white shadow-sm">
         <RevealRow
           ref={ref}
           disabled={disabled}
