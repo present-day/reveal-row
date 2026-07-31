@@ -57,6 +57,26 @@ import { RevealRow } from '@present-day/reveal-row'
 </RevealRow>
 ```
 
+## Multiple actions per side
+
+A side slot is a single column of any content — to show several buttons (iOS Mail-style Delete + Pin), lay them out with flex inside the slot and set `actionWidthLeft`/`actionWidthRight` to the **total** width of the group:
+
+```tsx
+<RevealRow
+  actionWidthRight={176} // 2 buttons × 88px
+  right={
+    <div style={{ display: 'flex', height: '100%' }}>
+      <button onClick={handleDelete}>Delete</button>
+      <button onClick={handlePin}>Pin</button>
+    </div>
+  }
+>
+  <MyRowContent />
+</RevealRow>
+```
+
+**[▶ See it live in the playground](https://present-day.github.io/reveal-row/)** under "Multiple actions".
+
 ## Modes
 
 | `mode`  | Slots used           | Resting ("closed") scroll                   |

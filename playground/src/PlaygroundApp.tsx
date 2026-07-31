@@ -136,6 +136,50 @@ export function PlaygroundApp() {
         </div>
       </section>
 
+      {/* Multiple actions */}
+      <section className="mb-8">
+        <SectionTitle>Multiple actions</SectionTitle>
+        <Description>
+          More than one button per side, iOS Mail-style. The side slot is a
+          single column — lay buttons out with flex inside it and set{' '}
+          <code>actionWidthRight={176}</code> to the total width (2 × 88px).
+        </Description>
+        <div className="overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm">
+          {ITEMS.slice(0, 2).map((item, i) => {
+            const id = item.id + 30
+            return (
+              <div key={id}>
+                {i > 0 && <Divider />}
+                <RevealRow
+                  ref={(el) => {
+                    if (el) refMap.current.set(id, el)
+                    else refMap.current.delete(id)
+                  }}
+                  actionWidthRight={176}
+                  right={
+                    <div className="flex h-full">
+                      <ActionButton
+                        label="Delete"
+                        color="bg-red-500"
+                        onClick={() => handleAction(id, 'delete')}
+                      />
+                      <ActionButton
+                        label="Pin"
+                        color="bg-amber-500"
+                        onClick={() => handleAction(id, 'pin')}
+                      />
+                    </div>
+                  }
+                  onRevealChange={(pos) => onRevealChange(id, pos)}
+                >
+                  <ItemContent title={item.title} subtitle={item.subtitle} />
+                </RevealRow>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
       {/* LEFT mode */}
       <section className="mb-8">
         <SectionTitle>Left mode</SectionTitle>
