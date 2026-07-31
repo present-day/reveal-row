@@ -1,9 +1,27 @@
-# `@present-day/reveal-row`
+# RevealRow
 
-Horizontally scrollable row that reveals one or two action columns — **right**, **left**, or **both** sides. Three snap positions: left · center · right. Styling is entirely via `classNames` props (no bundled CSS). Scroll physics use inline `style` on the scroll track so the component works with zero external CSS.
+**Buttery swipe-to-reveal actions for React lists — powered by native scroll physics, not JavaScript animation.**
 
-<img width="295" height="640" alt="Simulator Screen Recording - iPhone 15 - 2026-04-25 at 22 26 41" src="https://github.com/user-attachments/assets/932021d4-5224-479f-9df9-c7045bf12afb" style="float:right" />
+[![npm version](https://img.shields.io/npm/v/@present-day/reveal-row?color=cb3837&logo=npm)](https://www.npmjs.com/package/@present-day/reveal-row)
+[![CI](https://github.com/present-day/reveal-row/actions/workflows/ci.yml/badge.svg)](https://github.com/present-day/reveal-row/actions/workflows/ci.yml)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@present-day/reveal-row?label=gzip)](https://bundlephobia.com/package/@present-day/reveal-row)
+[![types](https://img.shields.io/npm/types/@present-day/reveal-row)](https://www.npmjs.com/package/@present-day/reveal-row)
+[![license](https://img.shields.io/npm/l/@present-day/reveal-row)](./LICENSE)
 
+The swipe-to-delete pattern everyone knows from iOS Mail — as a headless React component. Swipe (or drag, or scroll) a row horizontally to reveal action buttons on the **right**, the **left**, or **both** sides, with three crisp snap positions: left · center · right.
+
+**[▶ Try the live playground](https://present-day.github.io/reveal-row/)**
+
+<img width="295" height="640" alt="RevealRow demo — swiping a list row to reveal actions" src="https://github.com/user-attachments/assets/932021d4-5224-479f-9df9-c7045bf12afb" />
+
+## Why RevealRow?
+
+- 🍦 **Native scroll physics** — momentum, rubber-banding, and snap come from the browser's own scroll engine (CSS scroll-snap), not a JS animation loop. It feels right because it *is* the real thing.
+- 🎨 **Headless & unstyled** — no bundled CSS. Every sub-element takes your class names, so it drops into Tailwind, CSS Modules, or plain CSS without a fight.
+- 📱 **Touch, trackpad, and mouse** — one component, every input. Works inside vertically scrolling lists without gesture conflicts.
+- 🪶 **Tiny & dependency-free** — just `react` and `react-dom` as peers. Tree-shakeable, `sideEffects: false`, ESM + CJS + types.
+- ♿ **Accessible by default** — keyboard-friendly drag handle with configurable ARIA labels, and a click-guard so a swipe never fires an accidental row activation.
+- 🎛️ **Fully controllable** — imperative ref API (`reveal('left')`, `close()`), settled-position callbacks, and a `disabled`/`isActive` protocol for coordinating whole lists.
 
 ## Install
 
@@ -15,7 +33,7 @@ npm i @present-day/reveal-row
 
 Peer dependencies: `react`, `react-dom` (v18 or v19).
 
-## Basic usage
+## Quick start
 
 ```tsx
 import { RevealRow } from '@present-day/reveal-row'
@@ -89,9 +107,9 @@ ref.current?.reveal('right')           // snap to right action
 ref.current?.reveal('center')          // alias for close
 ```
 
-## classNames
+## Styling with classNames
 
-All sub-elements accept class names for styling:
+All sub-elements accept class names, so styling is entirely yours:
 
 ```tsx
 <RevealRow
@@ -115,6 +133,10 @@ All sub-elements accept class names for styling:
 
 **Preventing row activation on swipe** — the component guards against triggering a click after a horizontal drag. If you wrap the row in a command palette item or similar, keep the built-in `onClickCapture` behaviour intact, or replicate it.
 
-## Publishing
+## Publishing (maintainers)
 
 Run `bun run build` to produce `dist/`. The `exports` field in `package.json` points to `dist/index.{js,mjs,d.ts}`. Push a tag to trigger the GitHub Actions publish workflow (OIDC trusted publishing — no npm token needed in secrets).
+
+## License
+
+[MIT](./LICENSE) © [Present Day](https://presentday.io)
