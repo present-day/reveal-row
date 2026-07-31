@@ -165,17 +165,28 @@ All sub-elements accept class names, so styling is entirely yours:
 
 **Single-axis scrolling** — the root pins `overflow-y: hidden` so rows only ever scroll horizontally; vertical overflow clips instead of scrolling.
 
-**Rounded list corners** — don't rely on a parent's `overflow: hidden` + `border-radius` to clip action buttons: scroll containers are composited on their own layers, and browsers can skip ancestor rounded clipping mid-scroll, exposing square button corners. Instead, put the matching radius on the buttons that touch the container's edges — the outermost button of the group, on the first and last rows only:
+**Rounded list corners** — don't rely on a parent's `overflow: hidden` + `border-radius` to clip action buttons: scroll containers are composited on their own layers, and browsers can skip ancestor rounded clipping mid-scroll, exposing square button corners. Instead, put the matching radius on the buttons that touch the container's edges — the outermost button of the group, on the first and last rows only. Drive it from a token so the radius stays in one place:
 
 ```css
-/* card corner radius: 12px */
-.list > :first-child [data-reveal-row-right] button:last-child { border-top-right-radius: 12px; }
-.list > :last-child  [data-reveal-row-right] button:last-child { border-bottom-right-radius: 12px; }
-.list > :first-child [data-reveal-row-left]  button:first-child { border-top-left-radius: 12px; }
-.list > :last-child  [data-reveal-row-left]  button:first-child { border-bottom-left-radius: 12px; }
+:root { --row-radius: 12px; }
+.list { border-radius: var(--row-radius); }
+.list > :first-child [data-reveal-row-right] button:last-child { border-top-right-radius: var(--row-radius); }
+.list > :last-child  [data-reveal-row-right] button:last-child { border-bottom-right-radius: var(--row-radius); }
+.list > :first-child [data-reveal-row-left]  button:first-child { border-top-left-radius: var(--row-radius); }
+.list > :last-child  [data-reveal-row-left]  button:first-child { border-bottom-left-radius: var(--row-radius); }
 ```
 
 The playground implements the same idea with an index-aware helper (`edgeCorners` in `playground/src/PlaygroundApp.tsx`).
+
+## CSS tokens
+
+The component is headless, but its one built-in dimension is themeable via a CSS custom property:
+
+| Token | Default | Effect |
+| ----- | ------- | ------ |
+| `--reveal-row-action-min-width` | `88px` | Minimum width of an auto-sized action column (the floor under content-based sizing) |
+
+Set it on `:root` or any ancestor: `[data-reveal-mode] { --reveal-row-action-min-width: 72px; }`. Explicit `actionWidthLeft`/`actionWidthRight` props bypass the token. The playground layers its own tokens on top (`--row-radius`, `--action-width`) in `playground/index.html` — retheme everything from one place.
 
 ## Publishing (maintainers)
 

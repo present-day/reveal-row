@@ -656,7 +656,9 @@ function RevealRowInner({
           data-reveal-row-left
           style={{
             ...snapStart,
-            ...(wLIn != null ? { minWidth: 0, width: wLIn } : { minWidth: 88 }),
+            ...(wLIn != null
+              ? { minWidth: 0, width: wLIn }
+              : { minWidth: 'var(--reveal-row-action-min-width, 88px)' }),
           }}
         >
           {left}
@@ -670,7 +672,9 @@ function RevealRowInner({
           data-reveal-row-right
           style={{
             ...snapEnd,
-            ...(wRIn != null ? { minWidth: 0, width: wRIn } : { minWidth: 88 }),
+            ...(wRIn != null
+              ? { minWidth: 0, width: wRIn }
+              : { minWidth: 'var(--reveal-row-action-min-width, 88px)' }),
           }}
         >
           {right}
