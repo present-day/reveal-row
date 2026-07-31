@@ -579,6 +579,98 @@ describe('RevealRow', () => {
     })
   })
 
+  describe('multiple actions per side', () => {
+    it('renders a widened column with two buttons side by side', () => {
+      const { container } = render(
+        <RevealRow
+          actionWidthRight={176}
+          right={
+            <div style={{ display: 'flex', height: '100%' }}>
+              <button type="button">Delete</button>
+              <button type="button">Pin</button>
+            </div>
+          }
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+
+      const rootElement = container.firstChild as HTMLElement
+      expect(rootElement).toHaveStyle({ gridTemplateColumns: '100% 176px' })
+      expect(screen.getByText('Delete')).toBeInTheDocument()
+      expect(screen.getByText('Pin')).toBeInTheDocument()
+    })
+
+    it('delivers clicks to every action button, even after a swipe', () => {
+      const onDelete = vi.fn()
+      const onPin = vi.fn()
+      const { container } = render(
+        <RevealRow
+          actionWidthRight={176}
+          right={
+            <div style={{ display: 'flex', height: '100%' }}>
+              <button type="button" onClick={onDelete}>
+                Delete
+              </button>
+              <button type="button" onClick={onPin}>
+                Pin
+              </button>
+            </div>
+          }
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+
+      const rootElement = container.querySelector(
+        '[data-reveal-mode]',
+      ) as HTMLElement
+      Object.defineProperty(rootElement, 'scrollLeft', { value: 100 })
+      fireEvent.scroll(rootElement)
+
+      fireEvent.click(screen.getByText('Delete'))
+      fireEvent.click(screen.getByText('Pin'))
+
+      expect(onDelete).toHaveBeenCalledTimes(1)
+      expect(onPin).toHaveBeenCalledTimes(1)
+    })
+
+    it('reveal("right") snaps the full multi-button column into view', () => {
+      const handle: { current: RevealRowHandle | null } = { current: null }
+      const { container } = render(
+        <RevealRow
+          ref={(ref) => {
+            handle.current = ref
+          }}
+          actionWidthRight={176}
+          right={
+            <div style={{ display: 'flex', height: '100%' }}>
+              <button type="button">Delete</button>
+              <button type="button">Pin</button>
+            </div>
+          }
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+
+      const rootElement = container.firstChild as HTMLElement
+      let scrollLeft = 0
+      Object.defineProperty(rootElement, 'scrollLeft', {
+        configurable: true,
+        get: () => scrollLeft,
+        set: (v: number) => {
+          scrollLeft = v
+        },
+      })
+
+      handle.current?.reveal(REVEAL_POSITION.right, false)
+
+      // maxScroll = scrollWidth (300) - clientWidth (200)
+      expect(scrollLeft).toBe(100)
+    })
+  })
+
   describe('imperative API', () => {
     it('exposes close method through ref', () => {
       const handle: { current: RevealRowHandle | null } = { current: null }
