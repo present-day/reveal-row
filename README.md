@@ -20,7 +20,7 @@ The swipe-to-delete pattern everyone knows from iOS Mail — as a headless React
 - 🎨 **Headless & unstyled** — no bundled CSS. Every sub-element takes your class names, so it drops into Tailwind, CSS Modules, or plain CSS without a fight.
 - 📱 **Touch, trackpad, and mouse** — one component, every input. Works inside vertically scrolling lists without gesture conflicts.
 - 🪶 **Tiny & dependency-free** — just `react` and `react-dom` as peers. Tree-shakeable, `sideEffects: false`, ESM + CJS + types.
-- ♿ **Accessible by default** — keyboard-friendly drag handle with configurable ARIA labels, and a click-guard so a swipe never fires an accidental row activation.
+- ♿ **Accessible by default** — focus-driven reveal for keyboard users, `prefers-reduced-motion` support, configurable ARIA labels, and a click-guard so a swipe never fires an accidental row activation.
 - 🎛️ **Fully controllable** — imperative ref API (`reveal('left')`, `close()`), settled-position callbacks, and a `disabled`/`isActive` protocol for coordinating whole lists.
 
 ## Install
@@ -59,15 +59,14 @@ import { RevealRow } from '@present-day/reveal-row'
 
 ## Multiple actions per side
 
-A side slot is a single column of any content — to show several buttons (iOS Mail-style Delete + Pin), lay them out with flex inside the slot and set `actionWidthLeft`/`actionWidthRight` to the **total** width of the group:
+A side slot is a single column that **auto-sizes to its content** (with an 88px floor) — to show several buttons (iOS Mail-style Delete + Pin), lay them out with flex and give each button its own width. No math required:
 
 ```tsx
 <RevealRow
-  actionWidthRight={176} // 2 buttons × 88px
   right={
     <div style={{ display: 'flex', height: '100%' }}>
-      <button onClick={handleDelete}>Delete</button>
-      <button onClick={handlePin}>Pin</button>
+      <button style={{ width: 88 }} onClick={handleDelete}>Delete</button>
+      <button style={{ width: 88 }} onClick={handlePin}>Pin</button>
     </div>
   }
 >
@@ -75,7 +74,16 @@ A side slot is a single column of any content — to show several buttons (iOS M
 </RevealRow>
 ```
 
+Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-width column, exactly as before.
+
 **[▶ See it live in the playground](https://present-day.github.io/reveal-row/)** under "Multiple actions".
+
+## Accessibility
+
+- **Focus-driven reveal** — tabbing into an off-screen action button snaps that side cleanly into view (instead of the browser's un-snapped scroll-into-view). When focus leaves the row, a focus-initiated reveal closes again — so keyboard users never leave rows stuck open. Swipe-opened rows are not affected by focus loss.
+- **Reduced motion** — preset animations become instant under `prefers-reduced-motion: reduce`. An explicit `animationConfig` is treated as an intentional override and left untouched.
+- **State hooks for styling and testing** — the root carries `data-reveal-position="left | center | right"` (settled position) alongside `data-reveal-mode`.
+- **Screen readers** — the drag handle is decorative (`aria-hidden`) with a configurable sr-only description (`handleAriaLabel`).
 
 ## Modes
 
@@ -95,8 +103,8 @@ Omit `mode` and it's inferred: both slots → `both`, only `left` → `left`, ot
 | `left` | `ReactNode` | — | Leading action column |
 | `right` | `ReactNode` | — | Trailing action column |
 | `mode` | `'left' \| 'right' \| 'both'` | inferred | Override mode detection |
-| `actionWidthLeft` | `number` | `88` | Width (px) of the left column |
-| `actionWidthRight` | `number` | `88` | Width (px) of the right column |
+| `actionWidthLeft` | `number` | auto (min 88px) | Fixed width (px) of the left column; omit to size to content |
+| `actionWidthRight` | `number` | auto (min 88px) | Fixed width (px) of the right column; omit to size to content |
 | `classNames` | `RevealRowClassNames` | `{}` | Class names for each sub-element |
 | `showHandle` | `boolean` | `true` | Render the default 6-dot drag affordance |
 | `handle` | `ReactNode` | — | Replace the default handle with custom content |
@@ -152,6 +160,10 @@ All sub-elements accept class names, so styling is entirely yours:
 **Overscroll / browser back gestures** — if horizontal swipes compete with iOS back or macOS trackpad history navigation, set `overscroll-behavior-x: none` on a suitable ancestor (e.g. a full-screen container).
 
 **Preventing row activation on swipe** — the component guards against triggering a click after a horizontal drag. If you wrap the row in a command palette item or similar, keep the built-in `onClickCapture` behaviour intact, or replicate it.
+
+**Focus styles** — the row root is a scroll container, and CSS clips anything drawn outside the scrollport, including focus outlines (on both axes). Draw focus rings *inward* on action buttons and row content: `outline-offset: -2px`, or Tailwind's `focus-visible:ring-2 focus-visible:ring-inset`.
+
+**Single-axis scrolling** — the root pins `overflow-y: hidden` so rows only ever scroll horizontally; vertical overflow clips instead of scrolling.
 
 ## Publishing (maintainers)
 

@@ -307,14 +307,20 @@ describe('RevealRow', () => {
   })
 
   describe('action widths', () => {
-    it('uses default width for left action (88px)', () => {
+    it('auto-sizes the left column with an 88px floor by default', () => {
       const { container } = render(
         <RevealRow left={<div>Left action</div>}>
           <div>Content</div>
         </RevealRow>,
       )
-      const leftElement = container.querySelector('[data-reveal-row-left]')
-      expect(leftElement).toHaveStyle({ width: '88px' })
+      const rootElement = container.firstChild as HTMLElement
+      expect(rootElement).toHaveStyle({
+        gridTemplateColumns: 'minmax(88px, max-content) 100%',
+      })
+      const leftElement = container.querySelector(
+        '[data-reveal-row-left]',
+      ) as HTMLElement
+      expect(leftElement.style.width).toBe('')
     })
 
     it('uses custom width for left action', () => {
@@ -327,14 +333,20 @@ describe('RevealRow', () => {
       expect(leftElement).toHaveStyle({ width: '120px' })
     })
 
-    it('uses default width for right action (88px)', () => {
+    it('auto-sizes the right column with an 88px floor by default', () => {
       const { container } = render(
         <RevealRow right={<div>Right action</div>}>
           <div>Content</div>
         </RevealRow>,
       )
-      const rightElement = container.querySelector('[data-reveal-row-right]')
-      expect(rightElement).toHaveStyle({ width: '88px' })
+      const rootElement = container.firstChild as HTMLElement
+      expect(rootElement).toHaveStyle({
+        gridTemplateColumns: '100% minmax(88px, max-content)',
+      })
+      const rightElement = container.querySelector(
+        '[data-reveal-row-right]',
+      ) as HTMLElement
+      expect(rightElement.style.width).toBe('')
     })
 
     it('uses custom width for right action', () => {
@@ -668,6 +680,149 @@ describe('RevealRow', () => {
 
       // maxScroll = scrollWidth (300) - clientWidth (200)
       expect(scrollLeft).toBe(100)
+    })
+  })
+
+  describe('focus-driven reveal', () => {
+    function renderFocusRow() {
+      const utils = render(
+        <RevealRow
+          animationPreset={ANIMATION_PRESET.none}
+          right={<button type="button">Delete</button>}
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const rootElement = utils.container.firstChild as HTMLElement
+      let scrollLeft = 0
+      Object.defineProperty(rootElement, 'scrollLeft', {
+        configurable: true,
+        get: () => scrollLeft,
+        set: (v: number) => {
+          scrollLeft = v
+        },
+      })
+      return { ...utils, rootElement, getScrollLeft: () => scrollLeft }
+    }
+
+    it('snaps the action column into view when an action receives focus', () => {
+      const { getScrollLeft } = renderFocusRow()
+
+      fireEvent.focus(screen.getByText('Delete'))
+
+      // maxScroll = scrollWidth (300) - clientWidth (200)
+      expect(getScrollLeft()).toBe(100)
+    })
+
+    it('closes a focus-initiated reveal when focus leaves the row', () => {
+      const { getScrollLeft } = renderFocusRow()
+      const button = screen.getByText('Delete')
+
+      fireEvent.focus(button)
+      expect(getScrollLeft()).toBe(100)
+
+      fireEvent.blur(button, { relatedTarget: document.body })
+      expect(getScrollLeft()).toBe(0)
+    })
+
+    it('does not close a swipe-opened row on focus loss', () => {
+      const { rootElement, getScrollLeft } = renderFocusRow()
+
+      rootElement.scrollLeft = 100
+      fireEvent.scroll(rootElement)
+
+      fireEvent.blur(rootElement, { relatedTarget: document.body })
+      expect(getScrollLeft()).toBe(100)
+    })
+
+    it('keeps a focus-initiated reveal open while focus moves within the row', () => {
+      const { rootElement, getScrollLeft } = renderFocusRow()
+      const button = screen.getByText('Delete')
+
+      fireEvent.focus(button)
+      fireEvent.blur(button, { relatedTarget: rootElement })
+      expect(getScrollLeft()).toBe(100)
+    })
+  })
+
+  describe('reduced motion', () => {
+    it('makes preset animations instant under prefers-reduced-motion', () => {
+      const originalMatchMedia = window.matchMedia
+      window.matchMedia = vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }) as unknown as typeof window.matchMedia
+
+      try {
+        const handle: { current: RevealRowHandle | null } = { current: null }
+        const { container } = render(
+          <RevealRow
+            ref={(ref) => {
+              handle.current = ref
+            }}
+            right={<button type="button">Delete</button>}
+          >
+            <div>Content</div>
+          </RevealRow>,
+        )
+        const rootElement = container.firstChild as HTMLElement
+        let scrollLeft = 0
+        Object.defineProperty(rootElement, 'scrollLeft', {
+          configurable: true,
+          get: () => scrollLeft,
+          set: (v: number) => {
+            scrollLeft = v
+          },
+        })
+
+        // 'smooth' is normally a 400ms raf animation; reduced motion makes it
+        // land synchronously.
+        handle.current?.reveal(REVEAL_POSITION.right, ANIMATION_PRESET.smooth)
+        expect(scrollLeft).toBe(100)
+      } finally {
+        window.matchMedia = originalMatchMedia
+      }
+    })
+  })
+
+  describe('single-axis overflow', () => {
+    it('pins overflow-y to hidden so rows only scroll horizontally', () => {
+      const { container } = render(
+        <RevealRow right={<div>Right action</div>}>
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const rootElement = container.firstChild as HTMLElement
+      expect(rootElement).toHaveStyle({
+        overflowX: 'auto',
+        overflowY: 'hidden',
+      })
+    })
+  })
+
+  describe('data-reveal-position', () => {
+    it('starts at center and reflects the settled position', async () => {
+      const handle: { current: RevealRowHandle | null } = { current: null }
+      const { container } = render(
+        <RevealRow
+          ref={(ref) => {
+            handle.current = ref
+          }}
+          animationPreset={ANIMATION_PRESET.none}
+          right={<button type="button">Delete</button>}
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const rootElement = container.firstChild as HTMLElement
+      expect(rootElement).toHaveAttribute('data-reveal-position', 'center')
+
+      handle.current?.reveal(REVEAL_POSITION.right)
+
+      await waitFor(() =>
+        expect(rootElement).toHaveAttribute('data-reveal-position', 'right'),
+      )
     })
   })
 
@@ -1007,7 +1162,9 @@ describe('RevealRow', () => {
       )
 
       const rootElement = container.firstChild as HTMLElement
-      expect(rootElement).toHaveStyle({ gridTemplateColumns: '88px 100%' })
+      expect(rootElement).toHaveStyle({
+        gridTemplateColumns: 'minmax(88px, max-content) 100%',
+      })
     })
 
     it('sets correct grid template for right mode', () => {
@@ -1018,7 +1175,9 @@ describe('RevealRow', () => {
       )
 
       const rootElement = container.firstChild as HTMLElement
-      expect(rootElement).toHaveStyle({ gridTemplateColumns: '100% 88px' })
+      expect(rootElement).toHaveStyle({
+        gridTemplateColumns: '100% minmax(88px, max-content)',
+      })
     })
 
     it('sets correct grid template for both mode', () => {
@@ -1033,7 +1192,10 @@ describe('RevealRow', () => {
       )
 
       const rootElement = container.firstChild as HTMLElement
-      expect(rootElement).toHaveStyle({ gridTemplateColumns: '88px 100% 88px' })
+      expect(rootElement).toHaveStyle({
+        gridTemplateColumns:
+          'minmax(88px, max-content) 100% minmax(88px, max-content)',
+      })
     })
 
     it('uses custom action widths in grid template', () => {
