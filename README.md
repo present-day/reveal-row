@@ -165,6 +165,18 @@ All sub-elements accept class names, so styling is entirely yours:
 
 **Single-axis scrolling** — the root pins `overflow-y: hidden` so rows only ever scroll horizontally; vertical overflow clips instead of scrolling.
 
+**Rounded list corners** — don't rely on a parent's `overflow: hidden` + `border-radius` to clip action buttons: scroll containers are composited on their own layers, and browsers can skip ancestor rounded clipping mid-scroll, exposing square button corners. Instead, put the matching radius on the buttons that touch the container's edges — the outermost button of the group, on the first and last rows only:
+
+```css
+/* card corner radius: 12px */
+.list > :first-child [data-reveal-row-right] button:last-child { border-top-right-radius: 12px; }
+.list > :last-child  [data-reveal-row-right] button:last-child { border-bottom-right-radius: 12px; }
+.list > :first-child [data-reveal-row-left]  button:first-child { border-top-left-radius: 12px; }
+.list > :last-child  [data-reveal-row-left]  button:first-child { border-bottom-left-radius: 12px; }
+```
+
+The playground implements the same idea with an index-aware helper (`edgeCorners` in `playground/src/PlaygroundApp.tsx`).
+
 ## Publishing (maintainers)
 
 Run `bun run build` to produce `dist/`. The `exports` field in `package.json` points to `dist/index.{js,mjs,d.ts}`. Push a tag to trigger the GitHub Actions publish workflow (OIDC trusted publishing — no npm token needed in secrets).
