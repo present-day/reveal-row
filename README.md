@@ -8,7 +8,7 @@
 [![types](https://img.shields.io/npm/types/@present-day/reveal-row)](https://www.npmjs.com/package/@present-day/reveal-row)
 [![license](https://img.shields.io/npm/l/@present-day/reveal-row)](./LICENSE)
 
-The swipe-to-delete pattern everyone knows from iOS Mail — as a headless React component. Swipe (or drag, or scroll) a row horizontally to reveal action buttons on the **right**, the **left**, or **both** sides, with three crisp snap positions: left · center · right.
+The swipe-to-reveal pattern every mobile inbox and to-do list has made second nature — as a headless React component. Swipe (or drag, or scroll) a row horizontally to reveal action buttons on the **right**, the **left**, or **both** sides, with three crisp snap positions: left · center · right.
 
 **[▶ Try the live playground](https://present-day.github.io/reveal-row/)**
 
@@ -59,7 +59,7 @@ import { RevealRow } from '@present-day/reveal-row'
 
 ## Multiple actions per side
 
-A side slot is a single column that **auto-sizes to its content** (with an 88px floor) — to show several buttons (iOS Mail-style Delete + Pin), lay them out with flex and give each button its own width. No math required:
+A side slot is a single column that **auto-sizes to its content** (with an 88px floor) — to show several buttons side by side (say, Delete + Pin), lay them out with flex and give each button its own width. No math required:
 
 ```tsx
 <RevealRow
