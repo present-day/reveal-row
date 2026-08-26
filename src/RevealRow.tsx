@@ -105,6 +105,21 @@ function resolveAnimationConfig(
 const SCROLL_REVEAL_DEBOUNCE_MS = 64
 const restEpsilon = 2
 
+// Handle-tap peek: how far into the action column to scroll (kept well under
+// the wR/2 snap threshold) and the out/return micro-animation timings.
+const PEEK_FRACTION = 0.35
+const PEEK_OUT_ANIMATION: AnimationConfig = {
+  duration: 120,
+  easing: 'ease-out',
+}
+const PEEK_RETURN_ANIMATION: AnimationConfig = {
+  duration: 180,
+  easing: 'ease-out',
+}
+// Past the return animation's finalize fallback (duration + 100ms), so snap is
+// restored and trailing scroll events have flushed before suppression clears.
+const PEEK_SETTLE_BUFFER_MS = 120
+
 const rootScrollStyle: CSSProperties = {
   display: 'grid',
   overflowX: 'auto',
@@ -145,6 +160,7 @@ function RevealRowInner({
   handlePosition: handlePositionProp,
   handleTitle = 'Drag horizontally to show actions',
   handleAriaLabel = 'Drag horizontally to show actions',
+  peekOnHandleTap = true,
   onRevealChange,
   onScroll: onScrollProp,
   resetWhenDisabled = true,
@@ -169,6 +185,8 @@ function RevealRowInner({
   const containerRef = useRef<HTMLElement>(null)
   const leftRef = useRef<HTMLDivElement>(null)
   const rightRef = useRef<HTMLDivElement>(null)
+  const handleStripRef = useRef<HTMLDivElement>(null)
+  const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastEmitted = useRef<RevealPosition | null>(null)
   const swipedRef = useRef(false)
   const focusRevealedRef = useRef(false)
@@ -330,6 +348,59 @@ function RevealRowInner({
     },
     [],
   )
+
+  // Briefly scroll partway into an action column and spring back, teaching
+  // the swipe affordance without committing to a revealed state. Returns
+  // whether a peek actually started, so the caller can consume the click.
+  const peekActions = useCallback((): boolean => {
+    const el = containerRef.current
+    if (!el || disabled) return false
+    if (isAnimatingRef.current || peekTimerRef.current !== null) return false
+    const defaultConfig = resolveAnimationConfig(
+      undefined,
+      animationPreset,
+      animationConfig,
+    )
+    if (defaultConfig.duration === 0) return false
+
+    const m = getMaxScroll(el)
+    const wL = getWL()
+    const wR = getWR()
+    const closed = getScrollClosed(wL, wR, m, mode)
+    if (Math.abs(el.scrollLeft - closed) > restEpsilon) return false
+
+    // Peek toward the handle's side when that side has actions, otherwise
+    // toward whichever side exists.
+    const peekRight =
+      handlePosition === REVEAL_HANDLE_POSITION.end ? hasR : !hasL
+    const target = peekRight
+      ? Math.min(m, closed + wR * PEEK_FRACTION)
+      : Math.max(0, closed - wL * PEEK_FRACTION)
+    if (target === closed) return false
+
+    scrollToPosition(target, PEEK_OUT_ANIMATION)
+    peekTimerRef.current = setTimeout(() => {
+      scrollToPosition(closed, PEEK_RETURN_ANIMATION)
+      peekTimerRef.current = setTimeout(() => {
+        peekTimerRef.current = null
+        // The peek's own scrolling flags the row as swiped; the row is back
+        // at rest, so don't let that eat the user's next click.
+        swipedRef.current = false
+      }, PEEK_RETURN_ANIMATION.duration + PEEK_SETTLE_BUFFER_MS)
+    }, PEEK_OUT_ANIMATION.duration)
+    return true
+  }, [
+    animationConfig,
+    animationPreset,
+    disabled,
+    getWL,
+    getWR,
+    handlePosition,
+    hasL,
+    hasR,
+    mode,
+    scrollToPosition,
+  ])
 
   const closeRow = useCallback(
     (animated?: boolean | AnimationPreset | AnimationConfig) => {
@@ -502,6 +573,9 @@ function RevealRowInner({
       if (finalizeTimerRef.current !== null) {
         clearTimeout(finalizeTimerRef.current)
       }
+      if (peekTimerRef.current !== null) {
+        clearTimeout(peekTimerRef.current)
+      }
     },
     [],
   )
@@ -530,19 +604,33 @@ function RevealRowInner({
     [emitReveal, getWL, getWR, mode, onScrollProp],
   )
 
-  const onClickCapture = useCallback((e: MouseEvent) => {
-    const t = e.target as Node | null
-    if (t) {
-      if (leftRef.current?.contains(t) || rightRef.current?.contains(t)) {
+  const onClickCapture = useCallback(
+    (e: MouseEvent) => {
+      const t = e.target as Node | null
+      if (t) {
+        if (leftRef.current?.contains(t) || rightRef.current?.contains(t)) {
+          return
+        }
+      }
+      if (swipedRef.current) {
+        e.preventDefault()
+        e.stopPropagation()
+        swipedRef.current = false
         return
       }
-    }
-    if (swipedRef.current) {
-      e.preventDefault()
-      e.stopPropagation()
-      swipedRef.current = false
-    }
-  }, [])
+      if (
+        peekOnHandleTap &&
+        t &&
+        handleStripRef.current?.contains(t) &&
+        peekActions()
+      ) {
+        // The tap was aimed at the handle, not the row content.
+        e.preventDefault()
+        e.stopPropagation()
+      }
+    },
+    [peekActions, peekOnHandleTap],
+  )
 
   // `100%` for the main track (not `1fr`) so total row width > viewport: otherwise both
   // columns can shrink to fit with no overflow and the action stays visible.
@@ -589,6 +677,7 @@ function RevealRowInner({
 
   const handleStrip = showHandle ? (
     <div
+      ref={handleStripRef}
       role="presentation"
       className={classNames.handleContainer}
       data-reveal-row-handle

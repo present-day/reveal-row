@@ -120,6 +120,14 @@ export type RevealRowProps = {
   handleTitle?: string
   /** Shown in screen-reader text when using the default drag handle. */
   handleAriaLabel?: string
+  /**
+   * Tapping/clicking the drag handle briefly peeks the actions and springs
+   * back before the snap point, hinting at the swipe gesture. Skipped when
+   * the row's default animation resolves to instant (`animationPreset="none"`
+   * or the OS prefers-reduced-motion setting).
+   * @default true
+   */
+  peekOnHandleTap?: boolean
   /** Fires when the settled position changes. */
   onRevealChange?: (position: RevealPosition) => void
   onScroll?: (event: UIEvent<HTMLElement>) => void

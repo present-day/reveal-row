@@ -1200,6 +1200,208 @@ describe('RevealRow', () => {
     })
   })
 
+  describe('handle tap peek', () => {
+    function mockScrollLeft(el: HTMLElement, initial = 0) {
+      let value = initial
+      const writes: number[] = []
+      Object.defineProperty(el, 'scrollLeft', {
+        configurable: true,
+        get: () => value,
+        set: (v: number) => {
+          value = v
+          writes.push(v)
+        },
+      })
+      return { get: () => value, writes }
+    }
+
+    // Runs rAF callbacks synchronously with a monotonically increasing
+    // timestamp so scroll animations complete inline.
+    function mockSyncRaf() {
+      let frame = 0
+      return vi
+        .spyOn(window, 'requestAnimationFrame')
+        .mockImplementation((cb) => {
+          frame += 50
+          cb(frame)
+          return frame
+        })
+    }
+
+    beforeEach(() => {
+      vi.useFakeTimers()
+      vi.spyOn(performance, 'now').mockReturnValue(0)
+      mockSyncRaf()
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+      vi.restoreAllMocks()
+    })
+
+    it('peeks toward the right actions and springs back in right mode', () => {
+      const { container } = render(
+        <RevealRow right={<div>Right action</div>}>
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const rootElement = container.firstChild as HTMLElement
+      const scroll = mockScrollLeft(rootElement, 0)
+
+      fireEvent.click(
+        container.querySelector('[data-reveal-row-handle]') as HTMLElement,
+      )
+      vi.advanceTimersByTime(600)
+
+      // Moved toward the actions, but released before the snap threshold
+      // (wR / 2 = 44), and settled back at closed (0).
+      expect(Math.max(...scroll.writes)).toBeGreaterThan(0)
+      expect(Math.max(...scroll.writes)).toBeLessThan(44)
+      expect(scroll.get()).toBe(0)
+    })
+
+    it('peeks toward the left actions and springs back in left mode', () => {
+      const { container } = render(
+        <RevealRow left={<div>Left action</div>}>
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const rootElement = container.firstChild as HTMLElement
+      // Closed position in left mode is wL (88).
+      const scroll = mockScrollLeft(rootElement, 88)
+
+      fireEvent.click(
+        container.querySelector('[data-reveal-row-handle]') as HTMLElement,
+      )
+      vi.advanceTimersByTime(600)
+
+      // Dipped toward the left actions but stayed above the snap threshold
+      // (wL / 2 = 44), and settled back at closed (88).
+      expect(Math.min(...scroll.writes)).toBeLessThan(88)
+      expect(Math.min(...scroll.writes)).toBeGreaterThan(44)
+      expect(scroll.get()).toBe(88)
+    })
+
+    it('peeks toward the right actions in both mode with the default end handle', () => {
+      const { container } = render(
+        <RevealRow
+          left={<div>Left action</div>}
+          right={<div>Right action</div>}
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const rootElement = container.firstChild as HTMLElement
+      // Widen the row so the peek target is not clamped by maxScroll.
+      ;(rootElement as HTMLElement & { _scrollWidth?: number })._scrollWidth =
+        376
+      const scroll = mockScrollLeft(rootElement, 88)
+
+      fireEvent.click(
+        container.querySelector('[data-reveal-row-handle]') as HTMLElement,
+      )
+      vi.advanceTimersByTime(600)
+
+      expect(Math.max(...scroll.writes)).toBeGreaterThan(88)
+      expect(Math.max(...scroll.writes)).toBeLessThan(88 + 44)
+      expect(scroll.get()).toBe(88)
+    })
+
+    it('does not peek when peekOnHandleTap is false', () => {
+      const { container } = render(
+        <RevealRow peekOnHandleTap={false} right={<div>Right action</div>}>
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const rootElement = container.firstChild as HTMLElement
+      const scroll = mockScrollLeft(rootElement, 0)
+
+      fireEvent.click(
+        container.querySelector('[data-reveal-row-handle]') as HTMLElement,
+      )
+      vi.advanceTimersByTime(600)
+
+      expect(scroll.writes).toHaveLength(0)
+    })
+
+    it('does not peek under prefers-reduced-motion', () => {
+      const originalMatchMedia = window.matchMedia
+      window.matchMedia = vi.fn().mockReturnValue({
+        matches: true,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      }) as unknown as typeof window.matchMedia
+
+      try {
+        const { container } = render(
+          <RevealRow right={<div>Right action</div>}>
+            <div>Content</div>
+          </RevealRow>,
+        )
+        const rootElement = container.firstChild as HTMLElement
+        const scroll = mockScrollLeft(rootElement, 0)
+
+        fireEvent.click(
+          container.querySelector('[data-reveal-row-handle]') as HTMLElement,
+        )
+        vi.advanceTimersByTime(600)
+
+        expect(scroll.writes).toHaveLength(0)
+      } finally {
+        window.matchMedia = originalMatchMedia
+      }
+    })
+
+    it('does not peek when the row is already revealed', () => {
+      const { container } = render(
+        <RevealRow right={<div>Right action</div>}>
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const rootElement = container.firstChild as HTMLElement
+      // Fully revealed right: scrollLeft = maxScroll (100).
+      const scroll = mockScrollLeft(rootElement, 100)
+
+      fireEvent.click(
+        container.querySelector('[data-reveal-row-handle]') as HTMLElement,
+      )
+      vi.advanceTimersByTime(600)
+
+      expect(scroll.writes).toHaveLength(0)
+    })
+
+    it('consumes the handle tap and clears click suppression once the peek settles', () => {
+      const onClick = vi.fn()
+      const { container } = render(
+        <button type="button" onClick={onClick}>
+          <RevealRow right={<div>Right action</div>}>
+            <div>Content</div>
+          </RevealRow>
+        </button>,
+      )
+      const rootElement = container.querySelector(
+        '[data-reveal-mode]',
+      ) as HTMLElement
+      const scroll = mockScrollLeft(rootElement, 0)
+
+      // The tap that starts the peek must not double as a row click.
+      fireEvent.click(
+        container.querySelector('[data-reveal-row-handle]') as HTMLElement,
+        { bubbles: true },
+      )
+      expect(onClick).not.toHaveBeenCalled()
+
+      // Mid-peek scroll movement marks the row as swiped...
+      expect(scroll.get()).not.toBe(0)
+      fireEvent.scroll(rootElement)
+
+      // ...but once the peek settles back at closed, clicks flow again.
+      vi.advanceTimersByTime(600)
+      fireEvent.click(rootElement, { bubbles: true })
+      expect(onClick).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe('grid layout', () => {
     it('sets correct grid template for left mode', () => {
       const { container } = render(

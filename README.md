@@ -84,6 +84,7 @@ Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-wi
 - **Reduced motion** — preset animations become instant under `prefers-reduced-motion: reduce`. An explicit `animationConfig` is treated as an intentional override and left untouched.
 - **State hooks for styling and testing** — the root carries `data-reveal-position="left | center | right"` (settled position) alongside `data-reveal-mode`.
 - **Screen readers** — the drag handle is decorative (`aria-hidden`) with a configurable sr-only description (`handleAriaLabel`).
+- **Discoverable gesture** — tapping or clicking the handle briefly peeks the actions and springs back (released before the snap point), teaching the swipe without committing to a revealed state. Disable with `peekOnHandleTap={false}`; it's skipped automatically under reduced motion or `animationPreset="none"`.
 
 ## Modes
 
@@ -111,6 +112,7 @@ Omit `mode` and it's inferred: both slots → `both`, only `left` → `left`, ot
 | `handlePosition` | `'start' \| 'end'` | `'start'` in left mode, `'end'` otherwise | Where the handle strip sits in the row |
 | `handleTitle` | `string` | `'Drag horizontally…'` | Tooltip on the default handle |
 | `handleAriaLabel` | `string` | `'Drag horizontally…'` | Screen-reader text on the default handle |
+| `peekOnHandleTap` | `boolean` | `true` | Tapping the handle briefly peeks the actions and springs back, hinting at the swipe gesture |
 | `onRevealChange` | `(pos: RevealPosition) => void` | — | Fires when the settled position changes (debounced) |
 | `onScroll` | `UIEventHandler` | — | Raw scroll events |
 | `disabled` | `boolean` | `false` | Disables swiping |
