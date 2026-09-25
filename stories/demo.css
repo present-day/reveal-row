@@ -1,0 +1,23 @@
+@import "tailwindcss";
+
+/*
+ * `dark:` follows the Storybook Theme toolbar: forced by "dark", and by the
+ * OS preference under "system".
+ */
+@custom-variant dark {
+  &:where([data-theme="dark"], [data-theme="dark"] *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where([data-theme="system"], [data-theme="system"] *) {
+      @slot;
+    }
+  }
+}
+
+:root {
+  /* Design tokens — change these to retheme every story. */
+  --row-radius: 0.75rem; /* card corners + edge action buttons */
+  --action-width: 88px; /* action button width */
+  --reveal-row-action-min-width: var(--action-width); /* library floor */
+}

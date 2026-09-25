@@ -10,7 +10,7 @@
 
 The swipe-to-reveal pattern every mobile inbox and to-do list has made second nature — as a headless React component. Swipe (or drag, or scroll) a row horizontally to reveal action buttons on the **right**, the **left**, or **both** sides, with three crisp snap positions: left · center · right.
 
-**[▶ Try the live playground](https://present-day.github.io/reveal-row/)**
+**[▶ Try it in Storybook](https://present-day.github.io/reveal-row/)**
 
 <img width="295" height="640" alt="RevealRow demo — swiping a list row to reveal actions" src="https://github.com/user-attachments/assets/932021d4-5224-479f-9df9-c7045bf12afb" />
 
@@ -76,7 +76,7 @@ A side slot is a single column that **auto-sizes to its content** (with an 88px 
 
 Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-width column, exactly as before.
 
-**[▶ See it live in the playground](https://present-day.github.io/reveal-row/)** under "Multiple actions".
+**[▶ See it live in Storybook](https://present-day.github.io/reveal-row/?path=/story/revealrow--multiple-actions)** under "Multiple Actions".
 
 ## Accessibility
 
@@ -178,7 +178,7 @@ All sub-elements accept class names, so styling is entirely yours:
 .list > :last-child  [data-reveal-row-left]  button:first-child { border-bottom-left-radius: var(--row-radius); }
 ```
 
-The playground implements the same idea with an index-aware helper (`edgeCorners` in `playground/src/PlaygroundApp.tsx`).
+The stories implement the same idea with an index-aware helper (`edgeCorners` in `stories/demo.tsx`).
 
 ## CSS tokens
 
@@ -188,7 +188,17 @@ The component is headless, but its one built-in dimension is themeable via a CSS
 | ----- | ------- | ------ |
 | `--reveal-row-action-min-width` | `88px` | Minimum width of an auto-sized action column (the floor under content-based sizing) |
 
-Set it on `:root` or any ancestor: `[data-reveal-mode] { --reveal-row-action-min-width: 72px; }`. Explicit `actionWidthLeft`/`actionWidthRight` props bypass the token. The playground layers its own tokens on top (`--row-radius`, `--action-width`) in `playground/index.html` — retheme everything from one place.
+Set it on `:root` or any ancestor: `[data-reveal-mode] { --reveal-row-action-min-width: 72px; }`. Explicit `actionWidthLeft`/`actionWidthRight` props bypass the token. The stories layer their own tokens on top (`--row-radius`, `--action-width`) in `stories/demo.css` — retheme everything from one place.
+
+## Development
+
+```bash
+bun run storybook   # http://localhost:6006 (toolbar: Theme)
+bun run test
+bun run build
+```
+
+**Testing on a phone** — swipe gestures are easiest to judge without the Storybook manager UI around the story. Open a story's standalone iframe instead, e.g. `http://<your-lan-ip>:6006/iframe.html?id=revealrow--multiple-actions` locally, or [the deployed one](https://present-day.github.io/reveal-row/iframe.html?id=revealrow--multiple-actions). Every story shows its own event log at the bottom of the screen.
 
 ## Publishing (maintainers)
 

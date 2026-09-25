@@ -1,0 +1,10 @@
+.sb-surface {
+  box-sizing: border-box;
+  min-block-size: 100vh;
+  padding: 40px;
+  background: light-dark(#f4f3ef, #141517);
+  color: light-dark(#1c1c1f, #e8e8ea);
+  font:
+    14px / 1.5 system-ui,
+    sans-serif;
+}

@@ -7,7 +7,7 @@
   },
 
   "files": {
-    "includes": ["**", "!!**/dist"]
+    "includes": ["**", "!!**/dist", "!!**/storybook-static"]
   },
 
   "formatter": {
@@ -38,6 +38,12 @@
       "quoteStyle": "single",
       "jsxQuoteStyle": "double",
       "semicolons": "asNeeded"
+    }
+  },
+
+  "css": {
+    "parser": {
+      "tailwindDirectives": true
     }
   },
 

@@ -18,6 +18,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": ["src/**/*", "test-setup.ts"],
+  "include": ["src/**/*", "stories/**/*", ".storybook/**/*", "test-setup.ts"],
   "exclude": ["node_modules", "dist"]
 }
