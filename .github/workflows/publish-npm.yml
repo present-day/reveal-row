@@ -35,5 +35,9 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
+      # npm's OIDC trusted-publishing support requires npm 11.5.1+; Node 20 bundles npm 10.8.2,
+      # which silently falls back to an unauthenticated publish (fails with a 404, not a 401/403).
+      - run: npm install -g npm@latest
+
       - name: Publish to npm (OIDC)
         run: npm publish --provenance --access public
