@@ -3,11 +3,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RevealRow } from './RevealRow'
 import {
+  ACTION_PLACEMENT,
   ANIMATION_PRESET,
   REVEAL_HANDLE_POSITION,
   REVEAL_MODE,
   REVEAL_POSITION,
-  REVEAL_STYLE,
   type RevealRowHandle,
   type RevealRowProps,
 } from './types'
@@ -875,7 +875,7 @@ describe('RevealRow', () => {
     })
   })
 
-  describe('behind reveal style', () => {
+  describe('behind action placement', () => {
     function renderBehind(props: Partial<RevealRowProps> = {}) {
       const handle: { current: RevealRowHandle | null } = { current: null }
       const utils = render(
@@ -883,7 +883,7 @@ describe('RevealRow', () => {
           ref={(r) => {
             handle.current = r
           }}
-          revealStyle={REVEAL_STYLE.behind}
+          actionPlacement={ACTION_PLACEMENT.behind}
           animationPreset={ANIMATION_PRESET.none}
           right={<button type="button">Archive</button>}
           {...props}
@@ -910,7 +910,7 @@ describe('RevealRow', () => {
         </RevealRow>,
       )
       const root = container.firstChild as HTMLElement
-      expect(root).toHaveAttribute('data-reveal-style', 'inline')
+      expect(root).toHaveAttribute('data-action-placement', 'inline')
       const right = root.querySelector('[data-reveal-row-right]') as HTMLElement
       expect(right.style.position).toBe('')
       expect(right.style.scrollSnapAlign).toBe('end')
@@ -921,7 +921,7 @@ describe('RevealRow', () => {
       const right = root.querySelector('[data-reveal-row-right]') as HTMLElement
       const main = root.querySelector('[data-reveal-row-main]') as HTMLElement
 
-      expect(root).toHaveAttribute('data-reveal-style', 'behind')
+      expect(root).toHaveAttribute('data-action-placement', 'behind')
       expect(right.style.position).toBe('sticky')
       expect(right.style.right).toBe('0px')
       expect(Number(right.style.zIndex)).toBeLessThan(Number(main.style.zIndex))
@@ -972,6 +972,39 @@ describe('RevealRow', () => {
       })
       fireEvent.click(screen.getByText('Archive'))
       expect(onClick).toHaveBeenCalledTimes(1)
+    })
+
+    it('renders two actions on a side in a content-sized column', () => {
+      const onShare = vi.fn()
+      const onArchive = vi.fn()
+      const { root, handle, getScrollLeft } = renderBehind({
+        right: (
+          <div style={{ display: 'flex' }}>
+            <button type="button" onClick={onShare}>
+              Share
+            </button>
+            <button type="button" onClick={onArchive}>
+              Archive
+            </button>
+          </div>
+        ),
+      })
+      const right = root.querySelector('[data-reveal-row-right]') as HTMLElement
+      expect(right).toContainElement(screen.getByText('Share'))
+      expect(right).toContainElement(screen.getByText('Archive'))
+
+      // Content-sized: a max-content track that grows with the buttons,
+      // floored by min-width rather than pinned to a fixed pixel width.
+      expect(root.style.gridTemplateColumns).toBe('100% max-content')
+      expect(right.style.width).toBe('')
+      expect(right.style.minWidth).toContain('--reveal-row-action-min-width')
+
+      handle.current?.reveal(REVEAL_POSITION.right)
+      expect(getScrollLeft()).toBe(100)
+      fireEvent.click(screen.getByText('Share'))
+      fireEvent.click(screen.getByText('Archive'))
+      expect(onShare).toHaveBeenCalledTimes(1)
+      expect(onArchive).toHaveBeenCalledTimes(1)
     })
 
     it('reveals when an action receives focus and closes on blur', () => {
@@ -1038,7 +1071,7 @@ describe('RevealRow', () => {
       root.scrollLeft = 100
       rerender(
         <RevealRow
-          revealStyle={REVEAL_STYLE.behind}
+          actionPlacement={ACTION_PLACEMENT.behind}
           isActive
           right={<button type="button">Archive</button>}
         >
@@ -1050,7 +1083,7 @@ describe('RevealRow', () => {
 
       rerender(
         <RevealRow
-          revealStyle={REVEAL_STYLE.behind}
+          actionPlacement={ACTION_PLACEMENT.behind}
           disabled
           right={<button type="button">Archive</button>}
         >

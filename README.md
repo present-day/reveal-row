@@ -88,11 +88,11 @@ Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-wi
 
 ## Behind reveal
 
-By default the action columns sit in the scroll track, so they slide into view *alongside* the row. Set `revealStyle="behind"` for the other pattern (the iOS Messages / Claude session list): the whole row slides away and the actions stay put, already in place underneath it.
+By default the action columns sit in the scroll track, so they slide into view *alongside* the row. Set `actionPlacement="behind"` for the other pattern (the iOS Messages / Claude session list): the whole row slides away and the actions stay put, already in place underneath it.
 
 ```tsx
 <RevealRow
-  revealStyle="behind"
+  actionPlacement="behind"
   classNames={{ main: 'px-4 py-1.5' }}
   right={
     <div className="flex h-full items-center gap-3 px-4">
@@ -129,7 +129,7 @@ Omit `mode` and it's inferred: both slots → `both`, only `left` → `left`, ot
 | `left` | `ReactNode` | — | Leading action column |
 | `right` | `ReactNode` | — | Trailing action column |
 | `mode` | `'left' \| 'right' \| 'both'` | inferred | Override mode detection |
-| `revealStyle` | `'inline' \| 'behind'` | `'inline'` | `behind` pins the actions under the row, which slides away to uncover them (see [Behind reveal](#behind-reveal)) |
+| `actionPlacement` | `'inline' \| 'behind'` | `'inline'` | `behind` pins the actions under the row, which slides away to uncover them (see [Behind reveal](#behind-reveal)) |
 | `actionWidthLeft` | `number` | auto (min 88px) | Fixed width (px) of the left column; omit to size to content |
 | `actionWidthRight` | `number` | auto (min 88px) | Fixed width (px) of the right column; omit to size to content |
 | `classNames` | `RevealRowClassNames` | `{}` | Class names for each sub-element |

@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { type ReactNode, useCallback, useRef, useState } from 'react'
 import { fn } from 'storybook/test'
 import {
+  ACTION_PLACEMENT,
   ANIMATION_PRESET,
   type AnimationPreset,
   REVEAL_HANDLE_POSITION,
   REVEAL_POSITION,
-  REVEAL_STYLE,
   type RevealPosition,
   RevealRow,
   type RevealRowHandle,
@@ -714,6 +714,19 @@ const EditIcon = (
     <path d="M13 7l4 4" />
   </>
 )
+const PinIcon = (
+  <>
+    <path d="M9 4h6l-1 6 3 3H7l3-3z" />
+    <path d="M12 13v7" />
+  </>
+)
+const ShareIcon = (
+  <>
+    <path d="M12 15V4" />
+    <path d="M8 8l4-4 4 4" />
+    <path d="M6 12H5v8h14v-8h-1" />
+  </>
+)
 const ArchiveIcon = (
   <>
     <rect x="3.5" y="4" width="17" height="4.5" rx="1" />
@@ -745,7 +758,7 @@ function BehindDemo(args: StoryArgs) {
       title="Behind reveal"
       description={
         <>
-          <code>revealStyle="behind"</code>: the whole card slides and the
+          <code>actionPlacement="behind"</code>: the whole card slides and the
           buttons stay put, already in place underneath it.
         </>
       }
@@ -757,7 +770,7 @@ function BehindDemo(args: StoryArgs) {
             key={s.id}
             {...rowProps(args)}
             ref={refFor(s.id)}
-            revealStyle={REVEAL_STYLE.behind}
+            actionPlacement={ACTION_PLACEMENT.behind}
             classNames={{ main: 'px-4 py-1.5' }}
             right={
               <div className="flex h-full items-center gap-3 pr-4 pl-4">
@@ -793,7 +806,7 @@ function BehindBothDemo(args: StoryArgs) {
   return (
     <Scenario
       title="Behind reveal, both sides"
-      description="Swipe either way: each side's actions wait behind the card."
+      description="Swipe either way: two actions per side wait behind the card."
       log={log}
     >
       <div className="bg-zinc-900 py-2">
@@ -802,17 +815,23 @@ function BehindBothDemo(args: StoryArgs) {
             key={s.id}
             {...rowProps(args)}
             ref={refFor(s.id)}
-            revealStyle={REVEAL_STYLE.behind}
+            actionPlacement={ACTION_PLACEMENT.behind}
             classNames={{ main: 'px-4 py-1.5' }}
             left={
-              <div className="flex h-full items-center pr-4 pl-4">
+              <div className="flex h-full items-center gap-3 pr-4 pl-4">
+                <IconButton label="Pin" onClick={() => action(s.id, 'pin')}>
+                  {PinIcon}
+                </IconButton>
                 <IconButton label="Edit" onClick={() => action(s.id, 'edit')}>
                   {EditIcon}
                 </IconButton>
               </div>
             }
             right={
-              <div className="flex h-full items-center pr-4 pl-4">
+              <div className="flex h-full items-center gap-3 pr-4 pl-4">
+                <IconButton label="Share" onClick={() => action(s.id, 'share')}>
+                  {ShareIcon}
+                </IconButton>
                 <IconButton
                   label="Archive"
                   onClick={() => action(s.id, 'archive')}

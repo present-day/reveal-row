@@ -8,12 +8,13 @@ export const REVEAL_MODE = {
 
 export type RevealMode = (typeof REVEAL_MODE)[keyof typeof REVEAL_MODE]
 
-export const REVEAL_STYLE = {
+export const ACTION_PLACEMENT = {
   inline: 'inline',
   behind: 'behind',
 } as const
 
-export type RevealStyle = (typeof REVEAL_STYLE)[keyof typeof REVEAL_STYLE]
+export type ActionPlacement =
+  (typeof ACTION_PLACEMENT)[keyof typeof ACTION_PLACEMENT]
 
 export const REVEAL_POSITION = {
   left: 'left',
@@ -112,7 +113,7 @@ export type RevealRowProps = {
    * stay hidden while the row is closed.
    * @default 'inline'
    */
-  revealStyle?: RevealStyle
+  actionPlacement?: ActionPlacement
   /**
    * Fixed width (px) of the left action column. Omit to size the column to
    * its content with an 88px floor (`minmax(88px, max-content)`).

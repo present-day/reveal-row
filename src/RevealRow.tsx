@@ -20,6 +20,7 @@ import {
 import { DefaultHandleIcon } from './DefaultHandleIcon'
 import { getRevealFromScroll, getScrollClosed } from './getRevealFromScroll'
 import {
+  ACTION_PLACEMENT,
   ANIMATION_PRESET,
   ANIMATION_PRESETS,
   type AnimationConfig,
@@ -27,7 +28,6 @@ import {
   REVEAL_HANDLE_POSITION,
   REVEAL_MODE,
   REVEAL_POSITION,
-  REVEAL_STYLE,
   type RevealHandlePosition,
   type RevealMode,
   type RevealPosition,
@@ -165,7 +165,7 @@ function RevealRowInner({
   right,
   as: Element = 'div',
   mode: modeProp,
-  revealStyle = REVEAL_STYLE.inline,
+  actionPlacement = ACTION_PLACEMENT.inline,
   actionWidthLeft: wLIn,
   actionWidthRight: wRIn,
   classNames = {} as RevealRowClassNames,
@@ -187,7 +187,7 @@ function RevealRowInner({
   forwardedRef,
 }: InnerProps) {
   const mode = resolveMode(left, right, modeProp)
-  const behind = revealStyle === REVEAL_STYLE.behind
+  const behind = actionPlacement === ACTION_PLACEMENT.behind
   const hasL = mode === REVEAL_MODE.left || mode === REVEAL_MODE.both
   const hasR = mode === REVEAL_MODE.right || mode === REVEAL_MODE.both
 
@@ -744,7 +744,7 @@ function RevealRowInner({
       // biome-ignore lint/suspicious/noExplicitAny: Required for polymorphic ref compatibility
       ref={containerRef as any}
       data-reveal-mode={mode}
-      data-reveal-style={revealStyle}
+      data-action-placement={actionPlacement}
       data-reveal-position={settledPosition}
       className={cx(classNames.root, className)}
       onScroll={handleScroll}
