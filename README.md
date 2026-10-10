@@ -14,6 +14,20 @@ The swipe-to-reveal pattern every mobile inbox and to-do list has made second na
 
 <img width="295" height="640" alt="RevealRow demo — swiping a list row to reveal actions" src="https://github.com/user-attachments/assets/932021d4-5224-479f-9df9-c7045bf12afb" />
 
+## What it looks like
+
+Every screenshot below is a [Storybook](https://present-day.github.io/reveal-row/) story, so you can swipe the real thing.
+
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/right-mode-closed.png" width="280" alt="A dark list of rows at rest, each with a small drag handle on the right edge" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/right-mode-revealed.png" width="280" alt="The same list with the first row swiped left, revealing a red Delete action on the right" />
+</p>
+
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-reveal-demo.gif" width="280" alt="Animation of a rounded row card sliding left while two round Edit and Archive buttons stay fixed in place behind it, then sliding back to cover them" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-both-sides-revealed.png" width="280" alt="Behind placement on both sides: the first card slid right to uncover Pin and Edit buttons, the second slid left to uncover Share and Archive buttons" />
+</p>
+
 ## Why RevealRow?
 
 - 🍦 **Native scroll physics** — momentum, rubber-banding, and snap come from the browser's own scroll engine (CSS scroll-snap), not a JS animation loop. It feels right because it *is* the real thing.
@@ -57,6 +71,11 @@ import { RevealRow } from '@present-day/reveal-row'
 </RevealRow>
 ```
 
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/left-mode-revealed.png" width="280" alt="Left mode: the first row swiped right, revealing a blue Pin action on the left" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/both-mode.png" width="280" alt="Both mode: the first row swiped right to reveal Pin, the second swiped left to reveal Delete" />
+</p>
+
 ## Multiple actions per side
 
 A side slot is a single column that **auto-sizes to its content** (with an 88px floor) — to show several buttons side by side (say, Delete + Pin), lay them out with flex and give each button its own width. No math required:
@@ -73,6 +92,10 @@ A side slot is a single column that **auto-sizes to its content** (with an 88px 
   <MyRowContent />
 </RevealRow>
 ```
+
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/multiple-actions.png" width="280" alt="A row swiped left to reveal two side-by-side actions, a red Delete and an amber Pin" />
+</p>
 
 Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-width column, exactly as before.
 
@@ -104,6 +127,10 @@ By default the action columns sit in the scroll track, so they slide into view *
   <div className="rounded-3xl bg-zinc-950 p-5">Row content</div>
 </RevealRow>
 ```
+
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-right-revealed.png" width="280" alt="Behind placement: the first card slid left past the edge, uncovering round Edit and Archive buttons that stay fixed on the list background" />
+</p>
 
 Works with `left`, `right` and `both`, fixed or content-sized columns, and keeps everything else: scroll-snap feel, `onRevealChange`, the ref API, handle peek, focus-driven reveal, `disabled`, `isActive` and reduced motion.
 
