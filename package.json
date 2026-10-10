@@ -1,6 +1,6 @@
 {
   "name": "@present-day/reveal-row",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Horizontal scroll-to-reveal row for actions on the left, right, or both sides",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
