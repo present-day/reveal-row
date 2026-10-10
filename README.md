@@ -24,8 +24,8 @@ Every screenshot below is a [Storybook](https://present-day.github.io/reveal-row
 </p>
 
 <p>
-<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-reveal-demo.gif" width="280" alt="Animation of a rounded row card sliding left while two round Edit and Archive buttons stay fixed in place behind it, then sliding back to cover them" />
-<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-both-sides-revealed.png" width="280" alt="Behind placement on both sides: the first card slid right to uncover Pin and Edit buttons, the second slid left to uncover Share and Archive buttons" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-reveal-demo.gif" width="280" alt="Animation of a rounded row card sliding left while a round Archive button stays fixed in place behind it, then sliding back to cover them" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-both-sides-revealed.png" width="280" alt="Behind placement on both sides: the first card slid right to uncover a single Pin button, the second slid left to uncover Share and Archive buttons" />
 </p>
 
 ## Why RevealRow?
@@ -129,7 +129,7 @@ By default the action columns sit in the scroll track, so they slide into view *
 ```
 
 <p>
-<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-right-revealed.png" width="280" alt="Behind placement: the first card slid left past the edge, uncovering round Edit and Archive buttons that stay fixed on the list background" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-right-revealed.png" width="280" alt="Behind placement: the first card slid left past the edge, uncovering a round Archive button that stays fixed on the list background" />
 </p>
 
 Works with `left`, `right` and `both`, fixed or content-sized columns, and keeps everything else: scroll-snap feel, `onRevealChange`, the ref API, handle peek, focus-driven reveal, `disabled`, `isActive` and reduced motion.

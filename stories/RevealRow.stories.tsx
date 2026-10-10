@@ -24,19 +24,23 @@ import {
   useEventLog,
 } from './demo'
 
+/** How many action buttons to build per side (0 omits the side). */
+type ActionCounts = { leftActions?: number; rightActions?: number }
+
 /** The props exposed as controls; each story forwards them to every row. */
-type StoryArgs = Pick<
-  RevealRowProps,
-  | 'showHandle'
-  | 'handlePosition'
-  | 'peekOnHandleTap'
-  | 'disabled'
-  | 'resetWhenDisabled'
-  | 'animationPreset'
-  | 'actionWidthLeft'
-  | 'actionWidthRight'
-  | 'onRevealChange'
->
+type StoryArgs = ActionCounts &
+  Pick<
+    RevealRowProps,
+    | 'showHandle'
+    | 'handlePosition'
+    | 'peekOnHandleTap'
+    | 'disabled'
+    | 'resetWhenDisabled'
+    | 'animationPreset'
+    | 'actionWidthLeft'
+    | 'actionWidthRight'
+    | 'onRevealChange'
+  >
 
 /** Keeps a handle per row id, plus the logging shared by every scenario. */
 function useRows(args: StoryArgs) {
@@ -72,8 +76,77 @@ function useRows(args: StoryArgs) {
 }
 
 /** Row props that come straight from controls. */
-function rowProps({ onRevealChange: _, ...rest }: StoryArgs) {
+function rowProps({
+  onRevealChange: _,
+  leftActions: _l,
+  rightActions: _r,
+  ...rest
+}: StoryArgs) {
   return rest
+}
+
+const COUNT_CONTROL = {
+  control: { type: 'range', min: 0, max: 3, step: 1 },
+} as const
+const countArgTypes = {
+  leftActions: {
+    ...COUNT_CONTROL,
+    description: 'Number of leading actions (0 omits the side)',
+  },
+  rightActions: {
+    ...COUNT_CONTROL,
+    description: 'Number of trailing actions (0 omits the side)',
+  },
+} as const
+
+const INLINE_ACTIONS = {
+  left: [
+    { label: 'Pin', color: 'bg-blue-500' },
+    { label: 'Flag', color: 'bg-violet-500' },
+    { label: 'Mute', color: 'bg-zinc-500' },
+  ],
+  right: [
+    { label: 'Delete', color: 'bg-red-500' },
+    { label: 'Pin', color: 'bg-amber-500' },
+    { label: 'Archive', color: 'bg-emerald-600' },
+  ],
+}
+
+/** Colored action blocks for one side; the outermost one gets the edge radius. */
+function inlineActions(
+  side: 'left' | 'right',
+  count: number | undefined,
+  id: number,
+  onAction: (id: number, name: string) => void,
+  isFirstRow: boolean,
+  isLastRow: boolean,
+): ReactNode {
+  const pool = INLINE_ACTIONS[side].slice(0, count ?? 0)
+  if (pool.length === 0) return undefined
+  const buttons = pool.map((a, k) => {
+    const outermost = side === 'left' ? k === 0 : k === pool.length - 1
+    const button = (
+      <ActionButton
+        key={a.label}
+        label={a.label}
+        color={a.color}
+        onClick={() => onAction(id, a.label.toLowerCase())}
+        className={outermost ? edgeCorners(side, isFirstRow, isLastRow) : ''}
+      />
+    )
+    return pool.length === 1 ? (
+      button
+    ) : (
+      <div key={a.label} className="w-[var(--action-width)]">
+        {button}
+      </div>
+    )
+  })
+  return pool.length === 1 ? (
+    buttons[0]
+  ) : (
+    <div className="flex h-full">{buttons}</div>
+  )
 }
 
 const meta = {
@@ -136,18 +209,14 @@ function RightModeDemo(args: StoryArgs) {
             <RevealRow
               {...rowProps(args)}
               ref={refFor(item.id)}
-              right={
-                <ActionButton
-                  label="Delete"
-                  color="bg-red-500"
-                  onClick={() => action(item.id, 'delete')}
-                  className={edgeCorners(
-                    'right',
-                    i === 0,
-                    i === arr.length - 1,
-                  )}
-                />
-              }
+              right={inlineActions(
+                'right',
+                args.rightActions,
+                item.id,
+                action,
+                i === 0,
+                i === arr.length - 1,
+              )}
               onRevealChange={(pos) => revealChange(`item ${item.id}`, pos)}
             >
               <ItemContent title={item.title} subtitle={item.subtitle} />
@@ -162,6 +231,8 @@ function RightModeDemo(args: StoryArgs) {
 /** Swipe left to reveal a trailing action. */
 export const RightMode: Story = {
   name: 'Right mode (default)',
+  args: { rightActions: 1 },
+  argTypes: { rightActions: countArgTypes.rightActions },
   render: (args) => <RightModeDemo {...args} />,
 }
 
@@ -246,18 +317,14 @@ function LeftModeDemo(args: StoryArgs) {
               <RevealRow
                 {...rowProps(args)}
                 ref={refFor(id)}
-                left={
-                  <ActionButton
-                    label="Pin"
-                    color="bg-blue-500"
-                    onClick={() => action(id, 'pin')}
-                    className={edgeCorners(
-                      'left',
-                      i === 0,
-                      i === arr.length - 1,
-                    )}
-                  />
-                }
+                left={inlineActions(
+                  'left',
+                  args.leftActions,
+                  id,
+                  action,
+                  i === 0,
+                  i === arr.length - 1,
+                )}
                 onRevealChange={(pos) => revealChange(`item ${id}`, pos)}
               >
                 <ItemContent title={item.title} subtitle={item.subtitle} />
@@ -272,6 +339,8 @@ function LeftModeDemo(args: StoryArgs) {
 
 /** Swipe right to reveal a leading action. */
 export const LeftMode: Story = {
+  args: { leftActions: 1 },
+  argTypes: { leftActions: countArgTypes.leftActions },
   render: (args) => <LeftModeDemo {...args} />,
 }
 
@@ -292,30 +361,22 @@ function BothModeDemo(args: StoryArgs) {
               <RevealRow
                 {...rowProps(args)}
                 ref={refFor(id)}
-                left={
-                  <ActionButton
-                    label="Pin"
-                    color="bg-blue-500"
-                    onClick={() => action(id, 'pin')}
-                    className={edgeCorners(
-                      'left',
-                      i === 0,
-                      i === arr.length - 1,
-                    )}
-                  />
-                }
-                right={
-                  <ActionButton
-                    label="Delete"
-                    color="bg-red-500"
-                    onClick={() => action(id, 'delete')}
-                    className={edgeCorners(
-                      'right',
-                      i === 0,
-                      i === arr.length - 1,
-                    )}
-                  />
-                }
+                left={inlineActions(
+                  'left',
+                  args.leftActions,
+                  id,
+                  action,
+                  i === 0,
+                  i === arr.length - 1,
+                )}
+                right={inlineActions(
+                  'right',
+                  args.rightActions,
+                  id,
+                  action,
+                  i === 0,
+                  i === arr.length - 1,
+                )}
                 onRevealChange={(pos) => revealChange(`item ${id}`, pos)}
               >
                 <ItemContent title={item.title} subtitle={item.subtitle} />
@@ -330,6 +391,8 @@ function BothModeDemo(args: StoryArgs) {
 
 /** Actions on both sides with three snap positions. */
 export const BothMode: Story = {
+  args: { leftActions: 1, rightActions: 1 },
+  argTypes: countArgTypes,
   render: (args) => <BothModeDemo {...args} />,
 }
 
@@ -698,6 +761,13 @@ function IconButton({
   )
 }
 
+const DeleteIcon = (
+  <>
+    <path d="M4 7h16" />
+    <path d="M9 7V4h6v3" />
+    <path d="M6 7l1 13h10l1-13" />
+  </>
+)
 const EditIcon = (
   <>
     <path d="M4 20h4L19 9l-4-4L4 16z" />
@@ -724,6 +794,48 @@ const ArchiveIcon = (
     <path d="M10 12.5h4" />
   </>
 )
+
+const BEHIND_ACTIONS = {
+  // Taken from the outer edge in: the first N on the left, the last N on the right.
+  left: [
+    { label: 'Pin', icon: PinIcon },
+    { label: 'Edit', icon: EditIcon },
+    { label: 'Delete', icon: DeleteIcon },
+  ],
+  right: [
+    { label: 'Delete', icon: DeleteIcon },
+    { label: 'Share', icon: ShareIcon },
+    { label: 'Archive', icon: ArchiveIcon },
+  ],
+}
+
+/** Round icon buttons for one side of a behind row. */
+function behindActions(
+  side: 'left' | 'right',
+  count: number | undefined,
+  id: number,
+  onAction: (id: number, name: string) => void,
+): ReactNode {
+  const n = count ?? 0
+  const pool =
+    side === 'left'
+      ? BEHIND_ACTIONS.left.slice(0, n)
+      : BEHIND_ACTIONS.right.slice(BEHIND_ACTIONS.right.length - n)
+  if (pool.length === 0) return undefined
+  return (
+    <div className="flex h-full items-center gap-3 pr-4 pl-4">
+      {pool.map((a) => (
+        <IconButton
+          key={a.label}
+          label={a.label}
+          onClick={() => onAction(id, a.label.toLowerCase())}
+        >
+          {a.icon}
+        </IconButton>
+      ))}
+    </div>
+  )
+}
 
 function SessionCard({ title, meta, age }: (typeof SESSIONS)[number]) {
   return (
@@ -762,19 +874,8 @@ function BehindDemo(args: StoryArgs) {
             ref={refFor(s.id)}
             actionPlacement={ACTION_PLACEMENT.behind}
             classNames={{ main: 'px-4 py-1.5' }}
-            right={
-              <div className="flex h-full items-center gap-3 pr-4 pl-4">
-                <IconButton label="Edit" onClick={() => action(s.id, 'edit')}>
-                  {EditIcon}
-                </IconButton>
-                <IconButton
-                  label="Archive"
-                  onClick={() => action(s.id, 'archive')}
-                >
-                  {ArchiveIcon}
-                </IconButton>
-              </div>
-            }
+            right={behindActions('right', args.rightActions, s.id, action)}
+            left={behindActions('left', args.leftActions, s.id, action)}
             onRevealChange={(pos) => revealChange(`item ${s.id}`, pos)}
           >
             <SessionCard {...s} />
@@ -787,7 +888,8 @@ function BehindDemo(args: StoryArgs) {
 
 /** The Claude iOS session list: the card slides, round buttons wait behind. */
 export const BehindReveal: Story = {
-  args: { showHandle: false },
+  args: { showHandle: false, leftActions: 0, rightActions: 1 },
+  argTypes: countArgTypes,
   render: (args) => <BehindDemo {...args} />,
 }
 
@@ -796,7 +898,7 @@ function BehindBothDemo(args: StoryArgs) {
   return (
     <Scenario
       title="Behind reveal, both sides"
-      description="Swipe either way: two actions per side wait behind the card."
+      description="Swipe either way: actions wait behind the card on each side. Use the leftActions and rightActions controls to change how many."
       log={log}
     >
       <div className="bg-zinc-900 py-2">
@@ -807,29 +909,8 @@ function BehindBothDemo(args: StoryArgs) {
             ref={refFor(s.id)}
             actionPlacement={ACTION_PLACEMENT.behind}
             classNames={{ main: 'px-4 py-1.5' }}
-            left={
-              <div className="flex h-full items-center gap-3 pr-4 pl-4">
-                <IconButton label="Pin" onClick={() => action(s.id, 'pin')}>
-                  {PinIcon}
-                </IconButton>
-                <IconButton label="Edit" onClick={() => action(s.id, 'edit')}>
-                  {EditIcon}
-                </IconButton>
-              </div>
-            }
-            right={
-              <div className="flex h-full items-center gap-3 pr-4 pl-4">
-                <IconButton label="Share" onClick={() => action(s.id, 'share')}>
-                  {ShareIcon}
-                </IconButton>
-                <IconButton
-                  label="Archive"
-                  onClick={() => action(s.id, 'archive')}
-                >
-                  {ArchiveIcon}
-                </IconButton>
-              </div>
-            }
+            left={behindActions('left', args.leftActions, s.id, action)}
+            right={behindActions('right', args.rightActions, s.id, action)}
             onRevealChange={(pos) => revealChange(`item ${s.id}`, pos)}
           >
             <SessionCard {...s} />
@@ -841,6 +922,7 @@ function BehindBothDemo(args: StoryArgs) {
 }
 
 export const BehindRevealBothSides: Story = {
-  args: { showHandle: false },
+  args: { showHandle: false, leftActions: 1, rightActions: 2 },
+  argTypes: countArgTypes,
   render: (args) => <BehindBothDemo {...args} />,
 }
