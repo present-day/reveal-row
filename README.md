@@ -86,6 +86,31 @@ Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-wi
 - **Screen readers** — the drag handle is decorative (`aria-hidden`) with a configurable sr-only description (`handleAriaLabel`).
 - **Discoverable gesture** — tapping or clicking the handle briefly peeks the actions and springs back (released before the snap point), teaching the swipe without committing to a revealed state. Disable with `peekOnHandleTap={false}`; it's skipped automatically under reduced motion or `animationPreset="none"`.
 
+## Behind reveal
+
+By default the action columns sit in the scroll track, so they slide into view *alongside* the row. Set `revealStyle="behind"` for the other pattern (the iOS Messages / Claude session list): the whole row slides away and the actions stay put, already in place underneath it.
+
+```tsx
+<RevealRow
+  revealStyle="behind"
+  classNames={{ main: 'px-4 py-1.5' }}
+  right={
+    <div className="flex h-full items-center gap-3 px-4">
+      <button aria-label="Edit" onClick={handleEdit}>✎</button>
+      <button aria-label="Archive" onClick={handleArchive}>🗄</button>
+    </div>
+  }
+>
+  <div className="rounded-3xl bg-zinc-950 p-5">Row content</div>
+</RevealRow>
+```
+
+Works with `left`, `right` and `both`, fixed or content-sized columns, and keeps everything else: scroll-snap feel, `onRevealChange`, the ref API, handle peek, focus-driven reveal, `disabled`, `isActive` and reduced motion.
+
+- **How it works** — the action columns stay in the same scroll track (so scroll width, snapping and hit testing are the native ones) but are `position: sticky` to the scrollport edge and layered under the main column. Because they are real elements in the scroller, a revealed button is clickable with no gesture code of its own.
+- **Cover the actions** — the actions are always rendered, so whatever should hide them while the row is closed needs an opaque background. Put the background on your row content, and keep any gutter as `padding` on `classNames.main` (a transparent area would show the buttons through it). Leave at least a gutter's width of padding inside the action column on the outer side.
+- **Accessibility is unchanged** — as with `inline`, covered actions are neither `inert` nor `aria-hidden`; tabbing to one reveals it.
+
 ## Modes
 
 | `mode`  | Slots used           | Resting ("closed") scroll                   |
@@ -104,6 +129,7 @@ Omit `mode` and it's inferred: both slots → `both`, only `left` → `left`, ot
 | `left` | `ReactNode` | — | Leading action column |
 | `right` | `ReactNode` | — | Trailing action column |
 | `mode` | `'left' \| 'right' \| 'both'` | inferred | Override mode detection |
+| `revealStyle` | `'inline' \| 'behind'` | `'inline'` | `behind` pins the actions under the row, which slides away to uncover them (see [Behind reveal](#behind-reveal)) |
 | `actionWidthLeft` | `number` | auto (min 88px) | Fixed width (px) of the left column; omit to size to content |
 | `actionWidthRight` | `number` | auto (min 88px) | Fixed width (px) of the right column; omit to size to content |
 | `classNames` | `RevealRowClassNames` | `{}` | Class names for each sub-element |

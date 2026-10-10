@@ -27,6 +27,7 @@ import {
   REVEAL_HANDLE_POSITION,
   REVEAL_MODE,
   REVEAL_POSITION,
+  REVEAL_STYLE,
   type RevealHandlePosition,
   type RevealMode,
   type RevealPosition,
@@ -139,6 +140,18 @@ const rootScrollStyleDisabled: CSSProperties = {
   touchAction: 'pan-y',
 }
 
+// Behind variant: the action columns stay in the scroll track (so scroll
+// width, snap and hit testing are unchanged) but are sticky-pinned to the
+// scrollport edge, under the main column, which scrolls away to uncover them.
+// Browsers compute a sticky element's snap area from its pinned position, which
+// would collapse the snap points, so the columns carry no snap alignment and
+// an inert marker in each column's natural cell provides it instead. Every
+// item gets an explicit cell so the markers can share one with their column.
+const behindLeft: CSSProperties = { position: 'sticky', left: 0, zIndex: 0 }
+const behindRight: CSSProperties = { position: 'sticky', right: 0, zIndex: 0 }
+const behindMain: CSSProperties = { position: 'relative', zIndex: 1 }
+const behindMarker: CSSProperties = { gridRow: 1, pointerEvents: 'none' }
+
 const snapStart: CSSProperties = { scrollSnapAlign: 'start' }
 const snapEnd: CSSProperties = { scrollSnapAlign: 'end' }
 
@@ -152,6 +165,7 @@ function RevealRowInner({
   right,
   as: Element = 'div',
   mode: modeProp,
+  revealStyle = REVEAL_STYLE.inline,
   actionWidthLeft: wLIn,
   actionWidthRight: wRIn,
   classNames = {} as RevealRowClassNames,
@@ -173,6 +187,7 @@ function RevealRowInner({
   forwardedRef,
 }: InnerProps) {
   const mode = resolveMode(left, right, modeProp)
+  const behind = revealStyle === REVEAL_STYLE.behind
   const hasL = mode === REVEAL_MODE.left || mode === REVEAL_MODE.both
   const hasR = mode === REVEAL_MODE.right || mode === REVEAL_MODE.both
 
@@ -698,6 +713,9 @@ function RevealRowInner({
       className={classNames.main}
       data-reveal-row-main
       style={{
+        ...(behind
+          ? { ...behindMain, gridRow: 1, gridColumn: hasL ? 2 : 1 }
+          : null),
         ...snapStart,
         minWidth: 0,
         width: '100%',
@@ -726,6 +744,7 @@ function RevealRowInner({
       // biome-ignore lint/suspicious/noExplicitAny: Required for polymorphic ref compatibility
       ref={containerRef as any}
       data-reveal-mode={mode}
+      data-reveal-style={revealStyle}
       data-reveal-position={settledPosition}
       className={cx(classNames.root, className)}
       onScroll={handleScroll}
@@ -744,7 +763,9 @@ function RevealRowInner({
           className={classNames.left}
           data-reveal-row-left
           style={{
-            ...snapStart,
+            ...(behind
+              ? { ...behindLeft, gridRow: 1, gridColumn: 1 }
+              : snapStart),
             ...(wLIn != null
               ? { minWidth: 0, width: wLIn }
               : { minWidth: 'var(--reveal-row-action-min-width, 88px)' }),
@@ -754,13 +775,31 @@ function RevealRowInner({
         </div>
       ) : null}
       {mainColumn}
+      {behind && hasL ? (
+        <div
+          aria-hidden
+          style={{ ...behindMarker, ...snapStart, gridColumn: 1 }}
+        />
+      ) : null}
+      {behind && hasR ? (
+        <div
+          aria-hidden
+          style={{
+            ...behindMarker,
+            ...snapEnd,
+            gridColumn: hasL ? 3 : 2,
+          }}
+        />
+      ) : null}
       {hasR ? (
         <div
           ref={rightRef}
           className={classNames.right}
           data-reveal-row-right
           style={{
-            ...snapEnd,
+            ...(behind
+              ? { ...behindRight, gridRow: 1, gridColumn: hasL ? 3 : 2 }
+              : snapEnd),
             ...(wRIn != null
               ? { minWidth: 0, width: wRIn }
               : { minWidth: 'var(--reveal-row-action-min-width, 88px)' }),

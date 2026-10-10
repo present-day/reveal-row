@@ -1,11 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { useCallback, useRef, useState } from 'react'
+import { type ReactNode, useCallback, useRef, useState } from 'react'
 import { fn } from 'storybook/test'
 import {
   ANIMATION_PRESET,
   type AnimationPreset,
   REVEAL_HANDLE_POSITION,
   REVEAL_POSITION,
+  REVEAL_STYLE,
   type RevealPosition,
   RevealRow,
   type RevealRowHandle,
@@ -650,4 +651,187 @@ function NoHandleDemo(args: StoryArgs) {
 export const NoHandle: Story = {
   args: { showHandle: false },
   render: (args) => <NoHandleDemo {...args} />,
+}
+
+const SESSIONS = [
+  {
+    id: 1,
+    title: 'Fr-editor-brief mkt scope',
+    meta: 'present-day/cue.quest',
+    age: '9h',
+  },
+  { id: 2, title: 'Cue Quest Strategist', meta: 'Remote control', age: '9h' },
+  {
+    id: 3,
+    title: 'Fr-app-brief.md in cue-quest',
+    meta: 'present-day/app.cue.quest',
+    age: '13h',
+  },
+  { id: 4, title: 'Cue Quest Sonnet', meta: 'Remote control', age: '14h' },
+  {
+    id: 5,
+    title: 'Backend phase 1 schema',
+    meta: 'present-day/ola',
+    age: '1d',
+  },
+]
+
+function IconButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string
+  onClick: () => void
+  children: ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      className="flex size-12 shrink-0 items-center justify-center rounded-full border border-zinc-700 text-zinc-300 hover:bg-zinc-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-300"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className="size-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        {children}
+      </svg>
+    </button>
+  )
+}
+
+const EditIcon = (
+  <>
+    <path d="M4 20h4L19 9l-4-4L4 16z" />
+    <path d="M13 7l4 4" />
+  </>
+)
+const ArchiveIcon = (
+  <>
+    <rect x="3.5" y="4" width="17" height="4.5" rx="1" />
+    <path d="M5 8.5V19a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.5" />
+    <path d="M10 12.5h4" />
+  </>
+)
+
+function SessionCard({ title, meta, age }: (typeof SESSIONS)[number]) {
+  return (
+    <div className="flex items-center gap-4 rounded-[28px] border border-zinc-900 bg-zinc-950 px-5 py-5">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="truncate text-lg text-zinc-100">{title}</span>
+          <span className="shrink-0 text-sm text-zinc-500">{age}</span>
+        </div>
+        <div className="mt-1 truncate text-sm text-zinc-500">
+          <span className="text-green-500">Connected</span> • {meta}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function BehindDemo(args: StoryArgs) {
+  const { log, refFor, revealChange, action } = useRows(args)
+  return (
+    <Scenario
+      title="Behind reveal"
+      description={
+        <>
+          <code>revealStyle="behind"</code>: the whole card slides and the
+          buttons stay put, already in place underneath it.
+        </>
+      }
+      log={log}
+    >
+      <div className="-mx-0 bg-zinc-900 py-2">
+        {SESSIONS.map((s) => (
+          <RevealRow
+            key={s.id}
+            {...rowProps(args)}
+            ref={refFor(s.id)}
+            revealStyle={REVEAL_STYLE.behind}
+            classNames={{ main: 'px-4 py-1.5' }}
+            right={
+              <div className="flex h-full items-center gap-3 pr-4 pl-4">
+                <IconButton label="Edit" onClick={() => action(s.id, 'edit')}>
+                  {EditIcon}
+                </IconButton>
+                <IconButton
+                  label="Archive"
+                  onClick={() => action(s.id, 'archive')}
+                >
+                  {ArchiveIcon}
+                </IconButton>
+              </div>
+            }
+            onRevealChange={(pos) => revealChange(`item ${s.id}`, pos)}
+          >
+            <SessionCard {...s} />
+          </RevealRow>
+        ))}
+      </div>
+    </Scenario>
+  )
+}
+
+/** The Claude iOS session list: the card slides, round buttons wait behind. */
+export const BehindReveal: Story = {
+  args: { showHandle: false },
+  render: (args) => <BehindDemo {...args} />,
+}
+
+function BehindBothDemo(args: StoryArgs) {
+  const { log, refFor, revealChange, action } = useRows(args)
+  return (
+    <Scenario
+      title="Behind reveal, both sides"
+      description="Swipe either way: each side's actions wait behind the card."
+      log={log}
+    >
+      <div className="bg-zinc-900 py-2">
+        {SESSIONS.slice(0, 3).map((s) => (
+          <RevealRow
+            key={s.id}
+            {...rowProps(args)}
+            ref={refFor(s.id)}
+            revealStyle={REVEAL_STYLE.behind}
+            classNames={{ main: 'px-4 py-1.5' }}
+            left={
+              <div className="flex h-full items-center pr-4 pl-4">
+                <IconButton label="Edit" onClick={() => action(s.id, 'edit')}>
+                  {EditIcon}
+                </IconButton>
+              </div>
+            }
+            right={
+              <div className="flex h-full items-center pr-4 pl-4">
+                <IconButton
+                  label="Archive"
+                  onClick={() => action(s.id, 'archive')}
+                >
+                  {ArchiveIcon}
+                </IconButton>
+              </div>
+            }
+            onRevealChange={(pos) => revealChange(`item ${s.id}`, pos)}
+          >
+            <SessionCard {...s} />
+          </RevealRow>
+        ))}
+      </div>
+    </Scenario>
+  )
+}
+
+export const BehindRevealBothSides: Story = {
+  args: { showHandle: false },
+  render: (args) => <BehindBothDemo {...args} />,
 }

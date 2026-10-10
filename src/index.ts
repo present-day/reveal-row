@@ -10,6 +10,7 @@ export type {
   RevealRowElement,
   RevealRowHandle,
   RevealRowProps,
+  RevealStyle,
 } from './types'
 export {
   ANIMATION_PRESET,
@@ -18,4 +19,5 @@ export {
   REVEAL_MODE,
   REVEAL_POSITION,
   REVEAL_ROW_ELEMENTS,
+  REVEAL_STYLE,
 } from './types'
