@@ -656,24 +656,14 @@ export const NoHandle: Story = {
 const SESSIONS = [
   {
     id: 1,
-    title: 'Fr-editor-brief mkt scope',
-    meta: 'present-day/cue.quest',
+    title: 'Weekly planning notes',
+    meta: 'Shared · 3 people',
     age: '9h',
   },
-  { id: 2, title: 'Cue Quest Strategist', meta: 'Remote control', age: '9h' },
-  {
-    id: 3,
-    title: 'Fr-app-brief.md in cue-quest',
-    meta: 'present-day/app.cue.quest',
-    age: '13h',
-  },
-  { id: 4, title: 'Cue Quest Sonnet', meta: 'Remote control', age: '14h' },
-  {
-    id: 5,
-    title: 'Backend phase 1 schema',
-    meta: 'present-day/ola',
-    age: '1d',
-  },
+  { id: 2, title: 'Trip to Lisbon', meta: 'Updated yesterday', age: '9h' },
+  { id: 3, title: 'Grocery list', meta: 'Shared · 2 people', age: '13h' },
+  { id: 4, title: 'Design review', meta: 'Updated yesterday', age: '14h' },
+  { id: 5, title: 'Reading list', meta: 'Only you', age: '1d' },
 ]
 
 function IconButton({
