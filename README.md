@@ -14,6 +14,20 @@ The swipe-to-reveal pattern every mobile inbox and to-do list has made second na
 
 <img width="295" height="640" alt="RevealRow demo — swiping a list row to reveal actions" src="https://github.com/user-attachments/assets/932021d4-5224-479f-9df9-c7045bf12afb" />
 
+## What it looks like
+
+Every screenshot below is a [Storybook](https://present-day.github.io/reveal-row/) story, so you can swipe the real thing.
+
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/right-mode-closed.png" width="280" alt="A dark list of rows at rest, each with a small drag handle on the right edge" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/right-mode-revealed.png" width="280" alt="The same list with the first row swiped left, revealing a red Delete action on the right" />
+</p>
+
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-reveal-demo.gif" width="280" alt="Animation of a rounded row card sliding left while a round Archive button stays fixed in place behind it, then sliding back to cover them" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-both-sides-revealed.png" width="280" alt="Behind placement on both sides: the first card slid right to uncover a single Pin button, the second slid left to uncover Share and Archive buttons" />
+</p>
+
 ## Why RevealRow?
 
 - 🍦 **Native scroll physics** — momentum, rubber-banding, and snap come from the browser's own scroll engine (CSS scroll-snap), not a JS animation loop. It feels right because it *is* the real thing.
@@ -57,6 +71,11 @@ import { RevealRow } from '@present-day/reveal-row'
 </RevealRow>
 ```
 
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/left-mode-revealed.png" width="280" alt="Left mode: the first row swiped right, revealing a blue Pin action on the left" />
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/both-mode.png" width="280" alt="Both mode: the first row swiped right to reveal Pin, the second swiped left to reveal Delete" />
+</p>
+
 ## Multiple actions per side
 
 A side slot is a single column that **auto-sizes to its content** (with an 88px floor) — to show several buttons side by side (say, Delete + Pin), lay them out with flex and give each button its own width. No math required:
@@ -74,6 +93,10 @@ A side slot is a single column that **auto-sizes to its content** (with an 88px 
 </RevealRow>
 ```
 
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/multiple-actions.png" width="280" alt="A row swiped left to reveal two side-by-side actions, a red Delete and an amber Pin" />
+</p>
+
 Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-width column, exactly as before.
 
 **[▶ See it live in Storybook](https://present-day.github.io/reveal-row/?path=/story/revealrow--multiple-actions)** under "Multiple Actions".
@@ -85,6 +108,35 @@ Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-wi
 - **State hooks for styling and testing** — the root carries `data-reveal-position="left | center | right"` (settled position) alongside `data-reveal-mode`.
 - **Screen readers** — the drag handle is decorative (`aria-hidden`) with a configurable sr-only description (`handleAriaLabel`).
 - **Discoverable gesture** — tapping or clicking the handle briefly peeks the actions and springs back (released before the snap point), teaching the swipe without committing to a revealed state. Disable with `peekOnHandleTap={false}`; it's skipped automatically under reduced motion or `animationPreset="none"`.
+
+## Behind reveal
+
+By default the action columns sit in the scroll track, so they slide into view *alongside* the row. Set `actionPlacement="behind"` for the other pattern (the iOS Messages / Claude session list): the whole row slides away and the actions stay put, already in place underneath it.
+
+```tsx
+<RevealRow
+  actionPlacement="behind"
+  classNames={{ main: 'px-4 py-1.5' }}
+  right={
+    <div className="flex h-full items-center gap-3 px-4">
+      <button aria-label="Edit" onClick={handleEdit}>✎</button>
+      <button aria-label="Archive" onClick={handleArchive}>🗄</button>
+    </div>
+  }
+>
+  <div className="rounded-3xl bg-zinc-950 p-5">Row content</div>
+</RevealRow>
+```
+
+<p>
+<img src="https://raw.githubusercontent.com/present-day/reveal-row/main/docs/images/behind-right-revealed.png" width="280" alt="Behind placement: the first card slid left past the edge, uncovering a round Archive button that stays fixed on the list background" />
+</p>
+
+Works with `left`, `right` and `both`, fixed or content-sized columns, and keeps everything else: scroll-snap feel, `onRevealChange`, the ref API, handle peek, focus-driven reveal, `disabled`, `isActive` and reduced motion.
+
+- **How it works** — the action columns stay in the same scroll track (so scroll width, snapping and hit testing are the native ones) but are `position: sticky` to the scrollport edge and layered under the main column. Because they are real elements in the scroller, a revealed button is clickable with no gesture code of its own.
+- **Cover the actions** — the actions are always rendered, so whatever should hide them while the row is closed needs an opaque background. Put the background on your row content, and keep any gutter as `padding` on `classNames.main` (a transparent area would show the buttons through it). Leave at least a gutter's width of padding inside the action column on the outer side.
+- **Accessibility is unchanged** — as with `inline`, covered actions are neither `inert` nor `aria-hidden`; tabbing to one reveals it.
 
 ## Modes
 
@@ -104,6 +156,7 @@ Omit `mode` and it's inferred: both slots → `both`, only `left` → `left`, ot
 | `left` | `ReactNode` | — | Leading action column |
 | `right` | `ReactNode` | — | Trailing action column |
 | `mode` | `'left' \| 'right' \| 'both'` | inferred | Override mode detection |
+| `actionPlacement` | `'inline' \| 'behind'` | `'inline'` | `behind` pins the actions under the row, which slides away to uncover them (see [Behind reveal](#behind-reveal)) |
 | `actionWidthLeft` | `number` | auto (min 88px) | Fixed width (px) of the left column; omit to size to content |
 | `actionWidthRight` | `number` | auto (min 88px) | Fixed width (px) of the right column; omit to size to content |
 | `classNames` | `RevealRowClassNames` | `{}` | Class names for each sub-element |

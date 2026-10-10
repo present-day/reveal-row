@@ -3,11 +3,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { RevealRow } from './RevealRow'
 import {
+  ACTION_PLACEMENT,
   ANIMATION_PRESET,
   REVEAL_HANDLE_POSITION,
   REVEAL_MODE,
   REVEAL_POSITION,
   type RevealRowHandle,
+  type RevealRowProps,
 } from './types'
 
 describe('RevealRow', () => {
@@ -870,6 +872,225 @@ describe('RevealRow', () => {
       await waitFor(() =>
         expect(rootElement).toHaveAttribute('data-reveal-position', 'right'),
       )
+    })
+  })
+
+  describe('behind action placement', () => {
+    function renderBehind(props: Partial<RevealRowProps> = {}) {
+      const handle: { current: RevealRowHandle | null } = { current: null }
+      const utils = render(
+        <RevealRow
+          ref={(r) => {
+            handle.current = r
+          }}
+          actionPlacement={ACTION_PLACEMENT.behind}
+          animationPreset={ANIMATION_PRESET.none}
+          right={<button type="button">Archive</button>}
+          {...props}
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const root = utils.container.firstChild as HTMLElement
+      let scrollLeft = 0
+      Object.defineProperty(root, 'scrollLeft', {
+        configurable: true,
+        get: () => scrollLeft,
+        set: (v: number) => {
+          scrollLeft = v
+        },
+      })
+      return { ...utils, root, handle, getScrollLeft: () => scrollLeft }
+    }
+
+    it('defaults to the inline style', () => {
+      const { container } = render(
+        <RevealRow right={<button type="button">Archive</button>}>
+          <div>Content</div>
+        </RevealRow>,
+      )
+      const root = container.firstChild as HTMLElement
+      expect(root).toHaveAttribute('data-action-placement', 'inline')
+      const right = root.querySelector('[data-reveal-row-right]') as HTMLElement
+      expect(right.style.position).toBe('')
+      expect(right.style.scrollSnapAlign).toBe('end')
+    })
+
+    it('pins the action column behind the main column', () => {
+      const { root } = renderBehind()
+      const right = root.querySelector('[data-reveal-row-right]') as HTMLElement
+      const main = root.querySelector('[data-reveal-row-main]') as HTMLElement
+
+      expect(root).toHaveAttribute('data-action-placement', 'behind')
+      expect(right.style.position).toBe('sticky')
+      expect(right.style.right).toBe('0px')
+      expect(Number(right.style.zIndex)).toBeLessThan(Number(main.style.zIndex))
+      expect(main.style.position).toBe('relative')
+    })
+
+    it('moves snap alignment to inert markers so sticky columns do not collapse it', () => {
+      const { root } = renderBehind()
+      const right = root.querySelector('[data-reveal-row-right]') as HTMLElement
+      expect(right.style.scrollSnapAlign).toBe('')
+      const marker = root.querySelector(
+        '[aria-hidden][style*="scroll-snap-align: end"]',
+      ) as HTMLElement
+      expect(marker).toBeInTheDocument()
+      expect(marker.style.pointerEvents).toBe('none')
+    })
+
+    it('keeps the scroll-track layout of the inline style', () => {
+      const { root } = renderBehind()
+      expect(root.style.gridTemplateColumns).toBe('100% max-content')
+    })
+
+    it('reveals and closes through the handle and reports changes', async () => {
+      const onRevealChange = vi.fn()
+      const { handle, getScrollLeft } = renderBehind({ onRevealChange })
+
+      handle.current?.reveal(REVEAL_POSITION.right)
+      expect(getScrollLeft()).toBe(100)
+      await waitFor(() =>
+        expect(onRevealChange).toHaveBeenLastCalledWith(REVEAL_POSITION.right),
+      )
+
+      handle.current?.close()
+      expect(getScrollLeft()).toBe(0)
+      await waitFor(() =>
+        expect(onRevealChange).toHaveBeenLastCalledWith(REVEAL_POSITION.center),
+      )
+    })
+
+    it('fires a click on a revealed action', () => {
+      const onClick = vi.fn()
+      renderBehind({
+        right: (
+          <button type="button" onClick={onClick}>
+            Archive
+          </button>
+        ),
+      })
+      fireEvent.click(screen.getByText('Archive'))
+      expect(onClick).toHaveBeenCalledTimes(1)
+    })
+
+    it('renders two actions on a side in a content-sized column', () => {
+      const onShare = vi.fn()
+      const onArchive = vi.fn()
+      const { root, handle, getScrollLeft } = renderBehind({
+        right: (
+          <div style={{ display: 'flex' }}>
+            <button type="button" onClick={onShare}>
+              Share
+            </button>
+            <button type="button" onClick={onArchive}>
+              Archive
+            </button>
+          </div>
+        ),
+      })
+      const right = root.querySelector('[data-reveal-row-right]') as HTMLElement
+      expect(right).toContainElement(screen.getByText('Share'))
+      expect(right).toContainElement(screen.getByText('Archive'))
+
+      // Content-sized: a max-content track that grows with the buttons,
+      // floored by min-width rather than pinned to a fixed pixel width.
+      expect(root.style.gridTemplateColumns).toBe('100% max-content')
+      expect(right.style.width).toBe('')
+      expect(right.style.minWidth).toContain('--reveal-row-action-min-width')
+
+      handle.current?.reveal(REVEAL_POSITION.right)
+      expect(getScrollLeft()).toBe(100)
+      fireEvent.click(screen.getByText('Share'))
+      fireEvent.click(screen.getByText('Archive'))
+      expect(onShare).toHaveBeenCalledTimes(1)
+      expect(onArchive).toHaveBeenCalledTimes(1)
+    })
+
+    it('reveals when an action receives focus and closes on blur', () => {
+      const { getScrollLeft } = renderBehind()
+      const button = screen.getByText('Archive')
+
+      fireEvent.focus(button)
+      expect(getScrollLeft()).toBe(100)
+
+      fireEvent.blur(button, { relatedTarget: document.body })
+      expect(getScrollLeft()).toBe(0)
+    })
+
+    it('does not make the covered actions inert or hidden', () => {
+      renderBehind()
+      const button = screen.getByText('Archive')
+      expect(button.closest('[inert]')).toBeNull()
+      expect(button.closest('[aria-hidden]')).toBeNull()
+    })
+
+    it('left mode: pins left, reveals left and closes to the main column', () => {
+      const { root, handle, getScrollLeft } = renderBehind({
+        right: undefined,
+        left: <button type="button">Edit</button>,
+        actionWidthLeft: 80,
+      })
+      const left = root.querySelector('[data-reveal-row-left]') as HTMLElement
+      expect(left.style.position).toBe('sticky')
+      expect(left.style.left).toBe('0px')
+      expect(root.style.gridTemplateColumns).toBe('80px 100%')
+
+      handle.current?.reveal(REVEAL_POSITION.left)
+      expect(getScrollLeft()).toBe(0)
+      handle.current?.close()
+      expect(getScrollLeft()).toBe(80)
+    })
+
+    it('both mode: pins both columns in distinct cells', () => {
+      const { root, handle, getScrollLeft } = renderBehind({
+        left: <button type="button">Edit</button>,
+        actionWidthLeft: 50,
+        actionWidthRight: 50,
+      })
+      const left = root.querySelector('[data-reveal-row-left]') as HTMLElement
+      const main = root.querySelector('[data-reveal-row-main]') as HTMLElement
+      const right = root.querySelector('[data-reveal-row-right]') as HTMLElement
+      expect([left, main, right].map((e) => e.style.gridColumn)).toEqual([
+        '1',
+        '2',
+        '3',
+      ])
+      expect(left.style.position).toBe('sticky')
+      expect(right.style.position).toBe('sticky')
+      expect(root.style.gridTemplateColumns).toBe('50px 100% 50px')
+
+      handle.current?.reveal(REVEAL_POSITION.right)
+      expect(getScrollLeft()).toBe(100)
+      handle.current?.reveal(REVEAL_POSITION.left)
+      expect(getScrollLeft()).toBe(0)
+    })
+
+    it('still closes when isActive and ignores swipes when disabled', () => {
+      const { root, rerender, getScrollLeft } = renderBehind()
+      root.scrollLeft = 100
+      rerender(
+        <RevealRow
+          actionPlacement={ACTION_PLACEMENT.behind}
+          isActive
+          right={<button type="button">Archive</button>}
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+      expect(getScrollLeft()).toBe(0)
+      expect(root.style.overflowX).toBe('auto')
+
+      rerender(
+        <RevealRow
+          actionPlacement={ACTION_PLACEMENT.behind}
+          disabled
+          right={<button type="button">Archive</button>}
+        >
+          <div>Content</div>
+        </RevealRow>,
+      )
+      expect(root.style.overflowX).toBe('hidden')
     })
   })
 
