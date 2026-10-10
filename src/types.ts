@@ -8,6 +8,14 @@ export const REVEAL_MODE = {
 
 export type RevealMode = (typeof REVEAL_MODE)[keyof typeof REVEAL_MODE]
 
+export const ACTION_PLACEMENT = {
+  inline: 'inline',
+  behind: 'behind',
+} as const
+
+export type ActionPlacement =
+  (typeof ACTION_PLACEMENT)[keyof typeof ACTION_PLACEMENT]
+
 export const REVEAL_POSITION = {
   left: 'left',
   center: 'center',
@@ -97,6 +105,15 @@ export type RevealRowProps = {
    * mode is derived unless overridden.
    */
   mode?: RevealMode
+  /**
+   * How actions are uncovered. `inline` scrolls the action columns into view
+   * alongside the row. `behind` keeps them fixed at the row's edge, underneath
+   * the main content, which slides away to uncover them. The main content
+   * needs an opaque background (set it on `classNames.main`) so the actions
+   * stay hidden while the row is closed.
+   * @default 'inline'
+   */
+  actionPlacement?: ActionPlacement
   /**
    * Fixed width (px) of the left action column. Omit to size the column to
    * its content with an 88px floor (`minmax(88px, max-content)`).

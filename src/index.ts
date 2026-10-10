@@ -1,6 +1,7 @@
 export { getRevealFromScroll, getScrollClosed } from './getRevealFromScroll'
 export { RevealRow } from './RevealRow'
 export type {
+  ActionPlacement,
   AnimationConfig,
   AnimationPreset,
   RevealHandlePosition,
@@ -12,6 +13,7 @@ export type {
   RevealRowProps,
 } from './types'
 export {
+  ACTION_PLACEMENT,
   ANIMATION_PRESET,
   ANIMATION_PRESETS,
   REVEAL_HANDLE_POSITION,
