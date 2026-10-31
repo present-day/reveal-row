@@ -30,7 +30,7 @@ Every screenshot below is a [Storybook](https://present-day.github.io/reveal-row
 
 ## Why RevealRow?
 
-- 🍦 **Native scroll physics** — momentum, rubber-banding, and snap come from the browser's own scroll engine (CSS scroll-snap), not a JS animation loop. It feels right because it *is* the real thing.
+- 🍦 **Native scroll physics** — momentum, rubber-banding, and snap come from the browser's own scroll engine (CSS scroll-snap), not a JS animation loop. It feels right because it _is_ the real thing.
 - 🎨 **Headless & unstyled** — no bundled CSS. Every sub-element takes your class names, so it drops into Tailwind, CSS Modules, or plain CSS without a fight.
 - 📱 **Touch, trackpad, and mouse** — one component, every input. Works inside vertically scrolling lists without gesture conflicts.
 - 🪶 **Tiny & dependency-free** — just `react` and `react-dom` as peers. Tree-shakeable, `sideEffects: false`, ESM + CJS + types.
@@ -81,11 +81,15 @@ import { RevealRow } from '@present-day/reveal-row'
 A side slot is a single column that **auto-sizes to its content** (with an 88px floor) — to show several buttons side by side (say, Delete + Pin), lay them out with flex and give each button its own width. No math required:
 
 ```tsx
-<RevealRow
+;<RevealRow
   right={
     <div style={{ display: 'flex', height: '100%' }}>
-      <button style={{ width: 88 }} onClick={handleDelete}>Delete</button>
-      <button style={{ width: 88 }} onClick={handlePin}>Pin</button>
+      <button style={{ width: 88 }} onClick={handleDelete}>
+        Delete
+      </button>
+      <button style={{ width: 88 }} onClick={handlePin}>
+        Pin
+      </button>
     </div>
   }
 >
@@ -111,16 +115,20 @@ Passing `actionWidthLeft`/`actionWidthRight` a number still gives you a fixed-wi
 
 ## Behind reveal
 
-By default the action columns sit in the scroll track, so they slide into view *alongside* the row. Set `actionPlacement="behind"` for the other pattern (the iOS Messages / Claude session list): the whole row slides away and the actions stay put, already in place underneath it.
+By default the action columns sit in the scroll track, so they slide into view _alongside_ the row. Set `actionPlacement="behind"` for the other pattern (the iOS Messages / Claude session list): the whole row slides away and the actions stay put, already in place underneath it.
 
 ```tsx
-<RevealRow
+;<RevealRow
   actionPlacement="behind"
   classNames={{ main: 'px-4 py-1.5' }}
   right={
     <div className="flex h-full items-center gap-3 px-4">
-      <button aria-label="Edit" onClick={handleEdit}>✎</button>
-      <button aria-label="Archive" onClick={handleArchive}>🗄</button>
+      <button aria-label="Edit" onClick={handleEdit}>
+        ✎
+      </button>
+      <button aria-label="Archive" onClick={handleArchive}>
+        🗄
+      </button>
     </div>
   }
 >
@@ -140,39 +148,39 @@ Works with `left`, `right` and `both`, fixed or content-sized columns, and keeps
 
 ## Modes
 
-| `mode`  | Slots used           | Resting ("closed") scroll                   |
-| ------- | -------------------- | ------------------------------------------- |
-| `right` | `right` only         | `scrollLeft = 0` (left edge)                |
-| `left`  | `left` only          | `scrollLeft = wL` (after leading column)    |
-| `both`  | `left` and `right`   | `scrollLeft = wL` (main fills viewport)     |
+| `mode`  | Slots used         | Resting ("closed") scroll                |
+| ------- | ------------------ | ---------------------------------------- |
+| `right` | `right` only       | `scrollLeft = 0` (left edge)             |
+| `left`  | `left` only        | `scrollLeft = wL` (after leading column) |
+| `both`  | `left` and `right` | `scrollLeft = wL` (main fills viewport)  |
 
 Omit `mode` and it's inferred: both slots → `both`, only `left` → `left`, otherwise `right`.
 
 ## Props
 
-| Prop | Type | Default | Description |
-| ---- | ---- | ------- | ----------- |
-| `children` | `ReactNode` | — | Primary row content |
-| `left` | `ReactNode` | — | Leading action column |
-| `right` | `ReactNode` | — | Trailing action column |
-| `mode` | `'left' \| 'right' \| 'both'` | inferred | Override mode detection |
-| `actionPlacement` | `'inline' \| 'behind'` | `'inline'` | `behind` pins the actions under the row, which slides away to uncover them (see [Behind reveal](#behind-reveal)) |
-| `actionWidthLeft` | `number` | auto (min 88px) | Fixed width (px) of the left column; omit to size to content |
-| `actionWidthRight` | `number` | auto (min 88px) | Fixed width (px) of the right column; omit to size to content |
-| `classNames` | `RevealRowClassNames` | `{}` | Class names for each sub-element |
-| `showHandle` | `boolean` | `true` | Render the default 6-dot drag affordance |
-| `handle` | `ReactNode` | — | Replace the default handle with custom content |
-| `handlePosition` | `'start' \| 'end'` | `'start'` in left mode, `'end'` otherwise | Where the handle strip sits in the row |
-| `handleTitle` | `string` | `'Drag horizontally…'` | Tooltip on the default handle |
-| `handleAriaLabel` | `string` | `'Drag horizontally…'` | Screen-reader text on the default handle |
-| `peekOnHandleTap` | `boolean` | `true` | Tapping the handle briefly peeks the actions and springs back, hinting at the swipe gesture |
-| `onRevealChange` | `(pos: RevealPosition) => void` | — | Fires when the settled position changes (debounced) |
-| `onScroll` | `UIEventHandler` | — | Raw scroll events |
-| `disabled` | `boolean` | `false` | Disables swiping |
-| `resetWhenDisabled` | `boolean` | `true` | Snap closed when `disabled` becomes true |
-| `isActive` | `boolean` | `false` | Snap closed (e.g. another row was selected) |
-| `className` | `string` | — | Added to the root scroll element |
-| `style` | `CSSProperties` | — | Added to the root scroll element |
+| Prop                | Type                            | Default                                   | Description                                                                                                      |
+| ------------------- | ------------------------------- | ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `children`          | `ReactNode`                     | —                                         | Primary row content                                                                                              |
+| `left`              | `ReactNode`                     | —                                         | Leading action column                                                                                            |
+| `right`             | `ReactNode`                     | —                                         | Trailing action column                                                                                           |
+| `mode`              | `'left' \| 'right' \| 'both'`   | inferred                                  | Override mode detection                                                                                          |
+| `actionPlacement`   | `'inline' \| 'behind'`          | `'inline'`                                | `behind` pins the actions under the row, which slides away to uncover them (see [Behind reveal](#behind-reveal)) |
+| `actionWidthLeft`   | `number`                        | auto (min 88px)                           | Fixed width (px) of the left column; omit to size to content                                                     |
+| `actionWidthRight`  | `number`                        | auto (min 88px)                           | Fixed width (px) of the right column; omit to size to content                                                    |
+| `classNames`        | `RevealRowClassNames`           | `{}`                                      | Class names for each sub-element                                                                                 |
+| `showHandle`        | `boolean`                       | `true`                                    | Render the default 6-dot drag affordance                                                                         |
+| `handle`            | `ReactNode`                     | —                                         | Replace the default handle with custom content                                                                   |
+| `handlePosition`    | `'start' \| 'end'`              | `'start'` in left mode, `'end'` otherwise | Where the handle strip sits in the row                                                                           |
+| `handleTitle`       | `string`                        | `'Drag horizontally…'`                    | Tooltip on the default handle                                                                                    |
+| `handleAriaLabel`   | `string`                        | `'Drag horizontally…'`                    | Screen-reader text on the default handle                                                                         |
+| `peekOnHandleTap`   | `boolean`                       | `true`                                    | Tapping the handle briefly peeks the actions and springs back, hinting at the swipe gesture                      |
+| `onRevealChange`    | `(pos: RevealPosition) => void` | —                                         | Fires when the settled position changes (debounced)                                                              |
+| `onScroll`          | `UIEventHandler`                | —                                         | Raw scroll events                                                                                                |
+| `disabled`          | `boolean`                       | `false`                                   | Disables swiping                                                                                                 |
+| `resetWhenDisabled` | `boolean`                       | `true`                                    | Snap closed when `disabled` becomes true                                                                         |
+| `isActive`          | `boolean`                       | `false`                                   | Snap closed (e.g. another row was selected)                                                                      |
+| `className`         | `string`                        | —                                         | Added to the root scroll element                                                                                 |
+| `style`             | `CSSProperties`                 | —                                         | Added to the root scroll element                                                                                 |
 
 ## Ref API
 
@@ -216,19 +224,31 @@ All sub-elements accept class names, so styling is entirely yours:
 
 **Preventing row activation on swipe** — the component guards against triggering a click after a horizontal drag. If you wrap the row in a command palette item or similar, keep the built-in `onClickCapture` behaviour intact, or replicate it.
 
-**Focus styles** — the row root is a scroll container, and CSS clips anything drawn outside the scrollport, including focus outlines (on both axes). Draw focus rings *inward* on action buttons and row content: `outline-offset: -2px`, or Tailwind's `focus-visible:ring-2 focus-visible:ring-inset`.
+**Focus styles** — the row root is a scroll container, and CSS clips anything drawn outside the scrollport, including focus outlines (on both axes). Draw focus rings _inward_ on action buttons and row content: `outline-offset: -2px`, or Tailwind's `focus-visible:ring-2 focus-visible:ring-inset`.
 
 **Single-axis scrolling** — the root pins `overflow-y: hidden` so rows only ever scroll horizontally; vertical overflow clips instead of scrolling.
 
 **Rounded list corners** — don't rely on a parent's `overflow: hidden` + `border-radius` to clip action buttons: scroll containers are composited on their own layers, and browsers can skip ancestor rounded clipping mid-scroll, exposing square button corners. Instead, put the matching radius on the buttons that touch the container's edges — the outermost button of the group, on the first and last rows only. Drive it from a token so the radius stays in one place:
 
 ```css
-:root { --row-radius: 12px; }
-.list { border-radius: var(--row-radius); }
-.list > :first-child [data-reveal-row-right] button:last-child { border-top-right-radius: var(--row-radius); }
-.list > :last-child  [data-reveal-row-right] button:last-child { border-bottom-right-radius: var(--row-radius); }
-.list > :first-child [data-reveal-row-left]  button:first-child { border-top-left-radius: var(--row-radius); }
-.list > :last-child  [data-reveal-row-left]  button:first-child { border-bottom-left-radius: var(--row-radius); }
+:root {
+  --row-radius: 12px;
+}
+.list {
+  border-radius: var(--row-radius);
+}
+.list > :first-child [data-reveal-row-right] button:last-child {
+  border-top-right-radius: var(--row-radius);
+}
+.list > :last-child [data-reveal-row-right] button:last-child {
+  border-bottom-right-radius: var(--row-radius);
+}
+.list > :first-child [data-reveal-row-left] button:first-child {
+  border-top-left-radius: var(--row-radius);
+}
+.list > :last-child [data-reveal-row-left] button:first-child {
+  border-bottom-left-radius: var(--row-radius);
+}
 ```
 
 The stories implement the same idea with an index-aware helper (`edgeCorners` in `stories/demo.tsx`).
@@ -237,9 +257,9 @@ The stories implement the same idea with an index-aware helper (`edgeCorners` in
 
 The component is headless, but its one built-in dimension is themeable via a CSS custom property:
 
-| Token | Default | Effect |
-| ----- | ------- | ------ |
-| `--reveal-row-action-min-width` | `88px` | Minimum width of an auto-sized action column (the floor under content-based sizing) |
+| Token                           | Default | Effect                                                                              |
+| ------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `--reveal-row-action-min-width` | `88px`  | Minimum width of an auto-sized action column (the floor under content-based sizing) |
 
 Set it on `:root` or any ancestor: `[data-reveal-mode] { --reveal-row-action-min-width: 72px; }`. Explicit `actionWidthLeft`/`actionWidthRight` props bypass the token. The stories layer their own tokens on top (`--row-radius`, `--action-width`) in `stories/demo.css` — retheme everything from one place.
 
