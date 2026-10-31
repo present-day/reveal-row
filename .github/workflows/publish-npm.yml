@@ -32,8 +32,8 @@ jobs:
 
       - uses: actions/setup-node@v7
         with:
-          node-version: '22'
-          registry-url: 'https://registry.npmjs.org'
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
 
       # npm's OIDC trusted-publishing support requires npm 11.5.1+; without it npm silently
       # falls back to an unauthenticated publish (fails with a 404, not a 401/403). Pinned to
