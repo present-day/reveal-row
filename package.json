@@ -56,7 +56,7 @@
     "react-dom": ">=18.0.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.3",
+    "@biomejs/biome": "2.6.4",
     "@storybook/addon-a11y": "^10.6.0",
     "@storybook/react-vite": "^10.6.0",
     "@tailwindcss/vite": "^4.3.3",
@@ -73,7 +73,7 @@
     "tailwindcss": "^4.3.3",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
-    "vite": "8.3.4",
-    "vitest": "5.0.5"
+    "vite": "8.3.5",
+    "vitest": "5.1.0"
   }
 }
